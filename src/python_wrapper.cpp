@@ -18,6 +18,8 @@
 #include <iostream>
 #include <limits>
 
+#include <sbpl/headers.h>
+#include <sbpl/runners.h>
 
 namespace pybind11 {
     template <typename T>
@@ -28,6 +30,13 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 
+int run_planandnavigatexythetalat(char* plannerName, char* envCfgFilename, char* motPrimFilename, bool forwardSearch) {
+
+    return planandnavigatexythetalat(
+        StrToPlannerType(plannerName), envCfgFilename, motPrimFilename, forwardSearch);
+
+}
+
 
 /**
  * @brief pybind module
@@ -36,10 +45,7 @@ using namespace pybind11::literals;
  */
 PYBIND11_MODULE(_sbpl_module, m) {
    m.doc() = "Python wrapper for SBPL planners";
-//
-//   m.def("euclidean_distance", &create_euclidean_distance,
-//         "is_circular_topology"_a.noconvert(),
-//         "weights"_a.noconvert()
-//         );
+
+   m.def("planandnavigatexythetalat", &run_planandnavigatexythetalat);
 
 }

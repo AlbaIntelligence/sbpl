@@ -9,8 +9,8 @@ set(SBPL_VERSION ${SBPL_MAJOR_VERSION}.${SBPL_MINOR_VERSION}.${SBPL_PATCH_VERSIO
 
 set(CMAKE_BUILD_TYPE Release)
 
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+# set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+# set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_CXX_FLAGS "-std=c++1y ${CMAKE_CXX_FLAGS}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -55,6 +55,7 @@ add_library(sbpl SHARED
   src/utils/utils.cpp
   src/utils/2Dgridsearch.cpp
   src/utils/config.cpp
+  src/runners/runners.cpp
   )
 
 set(SBPL_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
