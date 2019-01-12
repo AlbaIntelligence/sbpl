@@ -2201,7 +2201,7 @@ void EnvironmentNAVXYTHETALATTICE::GetEnvParms(
     double* nominalvel_mpersecs,
     double* timetoturn45degsinplace_secs,
     unsigned char* obsthresh,
-    std::vector<SBPL_xytheta_mprimitive>* mprimitiveV)
+    std::vector<SBPL_xytheta_mprimitive>* mprimitiveV) const
 {
     *num_thetas = EnvNAVXYTHETALATCfg.NumThetaDirs;
     GetEnvParms(
@@ -2221,7 +2221,7 @@ void EnvironmentNAVXYTHETALATTICE::GetEnvParms(
     double* cellsize_m,
     double* nominalvel_mpersecs, double* timetoturn45degsinplace_secs,
     unsigned char* obsthresh,
-    std::vector<SBPL_xytheta_mprimitive>* mprimitiveV)
+    std::vector<SBPL_xytheta_mprimitive>* mprimitiveV) const
 {
     *size_x = EnvNAVXYTHETALATCfg.EnvWidth_c;
     *size_y = EnvNAVXYTHETALATCfg.EnvHeight_c;
@@ -2309,7 +2309,7 @@ bool EnvironmentNAVXYTHETALATTICE::SetEnvParameter(
     return true;
 }
 
-int EnvironmentNAVXYTHETALATTICE::GetEnvParameter(const char* parameter)
+int EnvironmentNAVXYTHETALATTICE::GetEnvParameter(const char* parameter) const
 {
     if (strcmp(parameter, "cost_inscribed_thresh") == 0) {
         return (int)EnvNAVXYTHETALATCfg.cost_inscribed_thresh;

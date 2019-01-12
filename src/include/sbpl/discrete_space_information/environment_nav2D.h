@@ -335,7 +335,7 @@ public:
      *        planning problem)
      */
     virtual void GetEnvParms(int *size_x, int *size_y, int* startx, int* starty, int* goalx, int* goaly,
-                             unsigned char* obsthresh);
+                             unsigned char* obsthresh) const;
 
     /**
      * \brief way to set up various parameters. For a list of parameters, see

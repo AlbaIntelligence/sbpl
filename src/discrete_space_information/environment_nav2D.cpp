@@ -1186,7 +1186,7 @@ unsigned char EnvironmentNAV2D::GetMapCost(int x, int y)
 }
 
 void EnvironmentNAV2D::GetEnvParms(int *size_x, int *size_y, int* startx, int* starty, int* goalx, int* goaly,
-                                   unsigned char* obsthresh)
+                                   unsigned char* obsthresh) const
 {
     *size_x = EnvNAV2DCfg.EnvWidth_c;
     *size_y = EnvNAV2DCfg.EnvHeight_c;

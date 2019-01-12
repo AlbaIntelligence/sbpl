@@ -230,7 +230,7 @@ public:
     /**
      * \brief returns the value of specific parameter - see function body for the list of parameters
      */
-    virtual int GetEnvParameter(const char* parameter);
+    virtual int GetEnvParameter(const char* parameter) const;
 
     /**
      * \brief see comments on the same function in the parent class
@@ -394,7 +394,7 @@ public:
     virtual void GetEnvParms(int *size_x, int *size_y, double* startx, double* starty, double* starttheta,
                              double* goalx, double* goaly, double* goaltheta, double* cellsize_m,
                              double* nominalvel_mpersecs, double* timetoturn45degsinplace_secs,
-                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
+                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV) const;
 
     /**
      * \brief returns environment parameters. Useful for creating a copy environment
@@ -402,7 +402,7 @@ public:
     virtual void GetEnvParms(int *size_x, int *size_y, int* num_thetas, double* startx, double* starty,
                              double* starttheta, double* goalx, double* goaly, double* goaltheta, double* cellsize_m,
                              double* nominalvel_mpersecs, double* timetoturn45degsinplace_secs,
-                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
+                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV) const;
 
     /**
      * \brief get internal configuration data structure
