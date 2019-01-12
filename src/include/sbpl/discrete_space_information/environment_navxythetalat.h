@@ -180,16 +180,12 @@ public:
     int size_x = -1;
     int size_y = -1;
     unsigned int numThetas = 0;
-    const unsigned char* mapdata = 0;
     double startx = -1;
     double starty = -1;
     double starttheta = -1;
     double goalx = -1;
     double goaly = -1;
     double goaltheta = -1;
-    double goaltol_x = -1;
-    double goaltol_y = -1;
-    double goaltol_theta = -1;
     double cellsize_m = -1;
     double nominalvel_mpersecs = -1;
     double timetoturn45degsinplace_secs = -1;
@@ -342,7 +338,6 @@ public:
                                const unsigned char* mapdata,
                                double startx, double starty, double starttheta,
                                double goalx, double goaly, double goaltheta,
-                               double goaltol_x, double goaltol_y, double goaltol_theta,
                                const std::vector<sbpl_2Dpt_t>& perimeterptsV, double cellsize_m,
                                double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
                                unsigned char obsthresh, const char* sMotPrimFile);
@@ -355,6 +350,7 @@ public:
      */
     virtual bool InitializeEnv(const std::vector<sbpl_2Dpt_t> & perimeterptsV,
                                const char* sMotPrimFile,
+                               const unsigned char* mapdata,
                                EnvNAVXYTHETALAT_InitParms params);
 
     /**

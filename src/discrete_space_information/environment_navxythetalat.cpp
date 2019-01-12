@@ -1922,6 +1922,7 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(const char* sEnvFile)
 bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
     const std::vector<sbpl_2Dpt_t>& perimeterptsV,
     const char* sMotPrimFile,
+    const unsigned char* mapdata,
     EnvNAVXYTHETALAT_InitParms params)
 {
     EnvNAVXYTHETALATCfg.NumThetaDirs = params.numThetas;
@@ -1936,10 +1937,9 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
 
     return InitializeEnv(
             params.size_x, params.size_y,
-            params.mapdata,
+            mapdata,
             params.startx, params.starty, params.starttheta,
             params.goalx, params.goaly, params.goaltheta,
-            params.goaltol_x, params.goaltol_y, params.goaltol_theta,
             perimeterptsV,
             params.cellsize_m,
             params.nominalvel_mpersecs,
@@ -1954,7 +1954,6 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
     const unsigned char* mapdata,
     double startx, double starty, double starttheta,
     double goalx, double goaly, double goaltheta,
-    double goaltol_x, double goaltol_y, double goaltol_theta,
     const std::vector<sbpl_2Dpt_t> & perimeterptsV,
     double cellsize_m,
     double nominalvel_mpersecs,

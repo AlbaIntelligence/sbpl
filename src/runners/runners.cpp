@@ -104,7 +104,8 @@ void navigationLoop(
     SBPLPlanner* planner,
     const EnvNAVXYTHETALAT_InitParms& params,
     int sensingRange,
-    double allocated_time_secs_foreachplan) {
+    double allocated_time_secs_foreachplan,
+    double goaltol_x, double goaltol_y, double goaltol_theta) {
 
     bool bPrint = false;
 
@@ -140,8 +141,8 @@ void navigationLoop(
     vector<sbpl_xy_theta_pt_t> xythetaPath;
 
     // now comes the main loop
-    while (fabs(startx - params.goalx) > params.goaltol_x || fabs(starty - params.goaly) > params.goaltol_y || fabs(starttheta - params.goaltheta)
-        > params.goaltol_theta) {
+    while (fabs(startx - params.goalx) > goaltol_x || fabs(starty - params.goaly) > goaltol_y || fabs(starttheta - params.goaltheta)
+        > goaltol_theta) {
         //simulate sensor data update
         bool bChanges = false;
         preds_of_changededgesIDV.clear();
@@ -385,12 +386,7 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
         params.startx, params.starty, params.starttheta,
         params.goalx, params.goaly, params.goaltheta);
 
-    params.goaltol_x = goaltol_x;
-    params.goaltol_y = goaltol_y;
-    params.goaltol_theta = goaltol_theta;
-    params.mapdata = map;
-
-    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, params);
+    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, map, params);
 
     if (!envInitialized) {
         throw SBPL_Exception("ERROR: InitializeEnv failed");
@@ -464,7 +460,8 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
         planner,
         params,
         sensingRange,
-        allocated_time_secs_foreachplan
+        allocated_time_secs_foreachplan,
+        goaltol_x, goaltol_y, goaltol_theta
     );
 
     delete[] map;

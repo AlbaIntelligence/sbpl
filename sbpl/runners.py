@@ -32,7 +32,6 @@ if __name__ == '__main__':
     # motion_primitives = os.path.join(mprim_folder(), 'pr2_10cm.mprim')
 
     env = _sbpl_module.EnvironmentNAVXYTHETALAT(footprint, motion_primitives, params)
-    print(params.goaltol_x)
 
     _sbpl_module.planandnavigatexythetalat(
         # "arastar",

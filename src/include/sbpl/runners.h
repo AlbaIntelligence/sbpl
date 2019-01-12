@@ -37,4 +37,5 @@ void navigationLoop(
     SBPLPlanner* planner,
     const EnvNAVXYTHETALAT_InitParms& params,
     int sensingRange,
-    double allocated_time_secs_foreachplan);
+    double allocated_time_secs_foreachplan,
+    double goaltol_x, double goaltol_y, double goaltol_theta);

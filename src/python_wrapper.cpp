@@ -39,7 +39,10 @@ public:
         }
     }
 
-    EnvironmentNAVXYTHETALATWrapper(const py::safe_array<double>& footprint_array, const char* motPrimFilename, EnvNAVXYTHETALAT_InitParms params) {
+    EnvironmentNAVXYTHETALATWrapper(
+        const py::safe_array<double>& footprint_array,
+        const char* motPrimFilename,
+        EnvNAVXYTHETALAT_InitParms params) {
         auto footprint = footprint_array.unchecked<2>();
         std::vector<sbpl_2Dpt_t> perimeterptsV;
         if (footprint_array.shape()[1] != 2) {
@@ -49,7 +52,7 @@ public:
             perimeterptsV.push_back(sbpl_2Dpt_t(footprint(i, 0), footprint(i, 1)));
         }
 
-        bool envInitialized = _environment.InitializeEnv(perimeterptsV, motPrimFilename, params);
+        bool envInitialized = _environment.InitializeEnv(perimeterptsV, motPrimFilename, NULL, params);
         if (!envInitialized) {
             throw SBPL_Exception("ERROR: InitializeEnv failed");
         }
@@ -116,14 +119,7 @@ int run_planandnavigatexythetalat(
 
     // environment parameters
 
-    EnvNAVXYTHETALAT_InitParms params;
-    std::vector<SBPL_xytheta_mprimitive> motionprimitiveV;
-    // get environment parameters from the true environment
-    trueEnvWrapper.env().GetEnvParms(&params.size_x, &params.size_y, &params.numThetas, &params.startx, &params.starty, &params.starttheta,
-                                     &params.goalx, &params.goaly, &params.goaltheta,
-                                     &params.cellsize_m, &params.nominalvel_mpersecs,
-                                     &params.timetoturn45degsinplace_secs, &params.obsthresh, &motionprimitiveV,
-                                     &params.costinscribed_thresh, &params.costcircum_thresh);
+    EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
 
     // print the map
     if (bPrintMap) {
@@ -148,15 +144,8 @@ int run_planandnavigatexythetalat(
         params.startx, params.starty, params.starttheta,
         params.goalx, params.goaly, params.goaltheta);
 
-    params.goaltol_x = goaltol_x;
-    params.goaltol_y = goaltol_y;
-    params.goaltol_theta = goaltol_theta;
-    params.mapdata = map;
-
-
-    //envWrapper
     EnvironmentNAVXYTHETALAT environment_navxythetalat;
-    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, params);
+    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, map, params);
     if (!envInitialized) {
         throw SBPL_Exception("ERROR: InitializeEnv failed");
     }
@@ -229,7 +218,8 @@ int run_planandnavigatexythetalat(
         planner,
         params,
         sensingRange,
-        allocated_time_secs_foreachplan
+        allocated_time_secs_foreachplan,
+        goaltol_x, goaltol_y, goaltol_theta
     );
 
     delete[] map;
@@ -267,9 +257,6 @@ PYBIND11_MODULE(_sbpl_module, m) {
         .def_readwrite("goalx", &EnvNAVXYTHETALAT_InitParms::goalx)
         .def_readwrite("goaly", &EnvNAVXYTHETALAT_InitParms::goaly)
         .def_readwrite("goaltheta", &EnvNAVXYTHETALAT_InitParms::goaltheta)
-        .def_readwrite("goaltol_x", &EnvNAVXYTHETALAT_InitParms::goaltol_x)
-        .def_readwrite("goaltol_y", &EnvNAVXYTHETALAT_InitParms::goaltol_y)
-        .def_readwrite("goaltol_theta", &EnvNAVXYTHETALAT_InitParms::goaltol_theta)
         .def_readwrite("cellsize_m", &EnvNAVXYTHETALAT_InitParms::cellsize_m)
         .def_readwrite("nominalvel_mpersecs", &EnvNAVXYTHETALAT_InitParms::nominalvel_mpersecs)
         .def_readwrite("timetoturn45degsinplace_secs", &EnvNAVXYTHETALAT_InitParms::timetoturn45degsinplace_secs)
