@@ -1518,7 +1518,7 @@ bool EnvironmentNAVXYTHETALATTICE::IsWithinMapCell(int X, int Y)
             Y >= 0 && Y < EnvNAVXYTHETALATCfg.EnvHeight_c);
 }
 
-bool EnvironmentNAVXYTHETALATTICE::IsValidConfiguration(int X, int Y, int Theta)
+bool EnvironmentNAVXYTHETALATTICE::IsValidConfiguration(int X, int Y, int Theta) const
 {
     std::vector<sbpl_2Dcell_t> footprint;
     sbpl_xy_theta_pt_t pose;
@@ -2264,7 +2264,7 @@ bool EnvironmentNAVXYTHETALATTICE::PoseDiscToCont(
             (iy >= 0) && (iy < EnvNAVXYTHETALATCfg.EnvHeight_c);
 }
 
-unsigned char EnvironmentNAVXYTHETALATTICE::GetMapCost(int x, int y)
+unsigned char EnvironmentNAVXYTHETALATTICE::GetMapCost(int x, int y) const
 {
     return EnvNAVXYTHETALATCfg.Grid2D[x][y];
 }

@@ -386,7 +386,7 @@ public:
      *        the map. Note this is pretty expensive operation since it computes the
      *        footprint of the robot based on its x,y,theta
      */
-    virtual bool IsValidConfiguration(int X, int Y, int Theta);
+    virtual bool IsValidConfiguration(int X, int Y, int Theta) const;
 
     /**
      * \brief returns environment parameters. Useful for creating a copy environment
@@ -419,7 +419,7 @@ public:
     /**
      * \brief returns the cost corresponding to the cell <x,y>
      */
-    virtual unsigned char GetMapCost(int x, int y);
+    virtual unsigned char GetMapCost(int x, int y) const;
 
     /**
      * \brief returns true if cell is within map
