@@ -42,17 +42,24 @@ public:
     EnvironmentNAVXYTHETALATWrapper(
         const py::safe_array<double>& footprint_array,
         const char* motPrimFilename,
+        const py::safe_array<unsigned char>& map_data_array,
         EnvNAVXYTHETALAT_InitParms params) {
         auto footprint = footprint_array.unchecked<2>();
+
         std::vector<sbpl_2Dpt_t> perimeterptsV;
         if (footprint_array.shape()[1] != 2) {
             throw SBPL_Exception("Footprint has to be n by 2 dims");
         }
+
+        if (map_data_array.shape()[0] != params.size_y || map_data_array.shape()[1] != params.size_x) {
+            throw SBPL_Exception("Map data shape and params size_x size_y should be equal");
+        }
+
         for (unsigned int i = 0; i < footprint_array.shape()[0]; i++) {
             perimeterptsV.push_back(sbpl_2Dpt_t(footprint(i, 0), footprint(i, 1)));
         }
-
-        bool envInitialized = _environment.InitializeEnv(perimeterptsV, motPrimFilename, NULL, params);
+        const unsigned char* map_data = &map_data_array.unchecked<2>()(0, 0);
+        bool envInitialized = _environment.InitializeEnv(perimeterptsV, motPrimFilename, map_data, params);
         if (!envInitialized) {
             throw SBPL_Exception("ERROR: InitializeEnv failed");
         }
@@ -84,7 +91,7 @@ private:
 int run_planandnavigatexythetalat(
     char* plannerName,
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
-    const EnvironmentNAVXYTHETALATWrapper& envWrapper,
+    EnvironmentNAVXYTHETALATWrapper& envWrapper,
     char* motPrimFilename,
     bool forwardSearch) {
 
@@ -97,25 +104,6 @@ int run_planandnavigatexythetalat(
     double goaltol_x = 0.001, goaltol_y = 0.001, goaltol_theta = 0.001;
 
     bool bPrintMap = false;
-
-    // set the perimeter of the robot
-    // it is given with 0, 0, 0 robot ref. point for which planning is done.
-    std::vector<sbpl_2Dpt_t> perimeterptsV;
-    sbpl_2Dpt_t pt_m;
-    double halfwidth = 0.01;
-    double halflength = 0.01;
-    pt_m.x = -halflength;
-    pt_m.y = -halfwidth;
-    perimeterptsV.push_back(pt_m);
-    pt_m.x = halflength;
-    pt_m.y = -halfwidth;
-    perimeterptsV.push_back(pt_m);
-    pt_m.x = halflength;
-    pt_m.y = halfwidth;
-    perimeterptsV.push_back(pt_m);
-    pt_m.x = -halflength;
-    pt_m.y = halfwidth;
-    perimeterptsV.push_back(pt_m);
 
     // environment parameters
 
@@ -133,27 +121,15 @@ int run_planandnavigatexythetalat(
         printf("System Pause (return=%d)\n", system("pause"));
     }
 
-    // create an empty map
-    unsigned char* map = new unsigned char[params.size_x * params.size_y];
-    for (int i = 0; i < params.size_x * params.size_y; i++) {
-        map[i] = 0;
-    }
-
     // check the start and goal obtained from the true environment
     printf("start: %f %f %f, goal: %f %f %f\n",
         params.startx, params.starty, params.starttheta,
         params.goalx, params.goaly, params.goaltheta);
 
-    EnvironmentNAVXYTHETALAT environment_navxythetalat;
-    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, map, params);
-    if (!envInitialized) {
-        throw SBPL_Exception("ERROR: InitializeEnv failed");
-    }
-
     MDPConfig MDPCfg;
 
     // initialize MDP info
-    if (!environment_navxythetalat.InitializeMDPCfg(&MDPCfg)) {
+    if (!envWrapper.env().InitializeMDPCfg(&MDPCfg)) {
         throw SBPL_Exception("ERROR: InitializeMDPCfg failed");
     }
 
@@ -162,18 +138,18 @@ int run_planandnavigatexythetalat(
     switch (plannerType) {
     case PLANNER_TYPE_ARASTAR:
         printf("Initializing ARAPlanner...\n");
-        planner = new ARAPlanner(&environment_navxythetalat, bforwardsearch);
+        planner = new ARAPlanner(&envWrapper.env(), bforwardsearch);
         break;
     case PLANNER_TYPE_ADSTAR:
         printf("Initializing ADPlanner...\n");
-        planner = new ADPlanner(&environment_navxythetalat, bforwardsearch);
+        planner = new ADPlanner(&envWrapper.env(), bforwardsearch);
         break;
     case PLANNER_TYPE_RSTAR:
         printf("Invalid configuration: xytheta environment does not support rstar planner...\n");
         return 0;
     case PLANNER_TYPE_ANASTAR:
         printf("Initializing anaPlanner...\n");
-        planner = new anaPlanner(&environment_navxythetalat, bforwardsearch);
+        planner = new anaPlanner(&envWrapper.env(), bforwardsearch);
         break;
     default:
         printf("Invalid planner type\n");
@@ -195,7 +171,7 @@ int run_planandnavigatexythetalat(
 
     double maxMotPrimLengthSquared = 0.0;
     double maxMotPrimLength = 0.0;
-    const EnvNAVXYTHETALATConfig_t* cfg = environment_navxythetalat.GetEnvNavConfig();
+    const EnvNAVXYTHETALATConfig_t* cfg = envWrapper.env().GetEnvNavConfig();
     for (int i = 0; i < (int)cfg->mprimV.size(); i++) {
         const SBPL_xytheta_mprimitive& mprim = cfg->mprimV.at(i);
         int dx = mprim.endcell.x;
@@ -211,8 +187,14 @@ int run_planandnavigatexythetalat(
 
     int sensingRange = (int)ceil(maxMotPrimLength);
 
+    // create an empty map
+    unsigned char* map = new unsigned char[params.size_x * params.size_y];
+    for (int i = 0; i < params.size_x * params.size_y; i++) {
+        map[i] = 0;
+    }
+
     navigationLoop(
-        environment_navxythetalat,
+        envWrapper.env(),
         trueEnvWrapper.env(),
         map,
         planner,
@@ -243,7 +225,10 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def(py::init<const char*>(),
            "config_filename"_a
        )
-       .def(py::init<const py::safe_array<double>&, const char*, EnvNAVXYTHETALAT_InitParms>())
+       .def(py::init<const py::safe_array<double>&,
+                     const char*,
+                     const py::safe_array<unsigned char>&,
+                     EnvNAVXYTHETALAT_InitParms>())
        .def("get_params", &EnvironmentNAVXYTHETALATWrapper::get_params)
    ;
 
