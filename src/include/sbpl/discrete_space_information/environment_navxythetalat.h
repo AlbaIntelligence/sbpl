@@ -177,17 +177,25 @@ struct EnvNAVXYTHETALATConfig_t
 class EnvNAVXYTHETALAT_InitParms
 {
 public:
-    unsigned int numThetas;
-    const unsigned char* mapdata;
-    double startx;
-    double starty;
-    double starttheta;
-    double goalx;
-    double goaly;
-    double goaltheta;
-    double goaltol_x;
-    double goaltol_y;
-    double goaltol_theta;
+    int size_x = -1;
+    int size_y = -1;
+    unsigned int numThetas = 0;
+    const unsigned char* mapdata = 0;
+    double startx = -1;
+    double starty = -1;
+    double starttheta = -1;
+    double goalx = -1;
+    double goaly = -1;
+    double goaltheta = -1;
+    double goaltol_x = -1;
+    double goaltol_y = -1;
+    double goaltol_theta = -1;
+    double cellsize_m = -1;
+    double nominalvel_mpersecs = -1;
+    double timetoturn45degsinplace_secs = -1;
+    unsigned char obsthresh = 0;
+    unsigned char costinscribed_thresh = 0;
+    unsigned char costcircum_thresh = 0;
 };
 
 /** \brief 3D (x,y,theta) planning using lattice-based graph problem. For
@@ -345,9 +353,9 @@ public:
      *        parameters may be given in the params object (including the ability to
      *        specify the number of thetas)
      */
-    virtual bool InitializeEnv(int width, int height, const std::vector<sbpl_2Dpt_t> & perimeterptsV, double cellsize_m,
-                               double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
-                               unsigned char obsthresh, const char* sMotPrimFile, EnvNAVXYTHETALAT_InitParms params);
+    virtual bool InitializeEnv(const std::vector<sbpl_2Dpt_t> & perimeterptsV,
+                               const char* sMotPrimFile,
+                               EnvNAVXYTHETALAT_InitParms params);
 
     /**
      * \brief update the traversability of a cell<x,y>
@@ -399,10 +407,12 @@ public:
     /**
      * \brief returns environment parameters. Useful for creating a copy environment
      */
-    virtual void GetEnvParms(int *size_x, int *size_y, int* num_thetas, double* startx, double* starty,
+    virtual void GetEnvParms(int *size_x, int *size_y, unsigned int* num_thetas, double* startx, double* starty,
                              double* starttheta, double* goalx, double* goaly, double* goaltheta, double* cellsize_m,
                              double* nominalvel_mpersecs, double* timetoturn45degsinplace_secs,
-                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV) const;
+                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV,
+                             unsigned char* costinscribed_thresh,
+                             unsigned char* costcircum_thresh) const;
 
     /**
      * \brief get internal configuration data structure

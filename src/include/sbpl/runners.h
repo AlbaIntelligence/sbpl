@@ -28,3 +28,13 @@ std::string EnvironmentTypeToStr(EnvironmentType environmentType);
 EnvironmentType StrToEnvironmentType(const char* str);
 
 int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch);
+
+
+void navigationLoop(
+    EnvironmentNAVXYTHETALAT& environment_navxythetalat,
+    const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat,
+    unsigned char* map,
+    SBPLPlanner* planner,
+    const EnvNAVXYTHETALAT_InitParms& params,
+    int sensingRange,
+    double allocated_time_secs_foreachplan);

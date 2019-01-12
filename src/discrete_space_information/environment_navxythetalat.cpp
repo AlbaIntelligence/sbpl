@@ -1920,28 +1920,31 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(const char* sEnvFile)
 }
 
 bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
-    int width,
-    int height,
     const std::vector<sbpl_2Dpt_t>& perimeterptsV,
-    double cellsize_m,
-    double nominalvel_mpersecs,
-    double timetoturn45degsinplace_secs,
-    unsigned char obsthresh,
     const char* sMotPrimFile,
     EnvNAVXYTHETALAT_InitParms params)
 {
     EnvNAVXYTHETALATCfg.NumThetaDirs = params.numThetas;
 
+    // set robot environment parameters (should be done before initialize function is called)
+    if (!this->SetEnvParameter("cost_inscribed_thresh", params.costinscribed_thresh)) {
+        throw SBPL_Exception("ERROR: failed to set parameters");
+    }
+    if (!this->SetEnvParameter("cost_possibly_circumscribed_thresh", params.costcircum_thresh)) {
+        throw SBPL_Exception("ERROR: failed to set parameters");
+    }
+
     return InitializeEnv(
-            width, height,
+            params.size_x, params.size_y,
             params.mapdata,
             params.startx, params.starty, params.starttheta,
             params.goalx, params.goaly, params.goaltheta,
             params.goaltol_x, params.goaltol_y, params.goaltol_theta,
             perimeterptsV,
-            cellsize_m,
-            nominalvel_mpersecs, timetoturn45degsinplace_secs,
-            obsthresh,
+            params.cellsize_m,
+            params.nominalvel_mpersecs,
+            params.timetoturn45degsinplace_secs,
+            params.obsthresh,
             sMotPrimFile);
 }
 
@@ -2194,14 +2197,16 @@ bool EnvironmentNAVXYTHETALATTICE::IsObstacle(int x, int y)
 }
 
 void EnvironmentNAVXYTHETALATTICE::GetEnvParms(
-    int *size_x, int *size_y, int* num_thetas,
+    int *size_x, int *size_y, unsigned int* num_thetas,
     double* startx, double* starty, double* starttheta,
     double* goalx, double* goaly, double* goaltheta,
     double* cellsize_m,
     double* nominalvel_mpersecs,
     double* timetoturn45degsinplace_secs,
     unsigned char* obsthresh,
-    std::vector<SBPL_xytheta_mprimitive>* mprimitiveV) const
+    std::vector<SBPL_xytheta_mprimitive>* mprimitiveV,
+    unsigned char* costinscribed_thresh,
+    unsigned char* costcircum_thresh) const
 {
     *num_thetas = EnvNAVXYTHETALATCfg.NumThetaDirs;
     GetEnvParms(
@@ -2212,6 +2217,8 @@ void EnvironmentNAVXYTHETALATTICE::GetEnvParms(
             nominalvel_mpersecs, timetoturn45degsinplace_secs,
             obsthresh,
             mprimitiveV);
+    *costinscribed_thresh = this->GetEnvParameter("cost_inscribed_thresh");
+    *costcircum_thresh = this->GetEnvParameter("cost_possibly_circumscribed_thresh");
 }
 
 void EnvironmentNAVXYTHETALATTICE::GetEnvParms(

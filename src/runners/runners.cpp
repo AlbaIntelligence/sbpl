@@ -103,9 +103,7 @@ void navigationLoop(
     unsigned char* map,
     SBPLPlanner* planner,
     const EnvNAVXYTHETALAT_InitParms& params,
-    double cellsize_m,
     int sensingRange,
-    int size_x, int size_y,
     double allocated_time_secs_foreachplan) {
 
     bool bPrint = false;
@@ -131,8 +129,8 @@ void navigationLoop(
     }
 
     // print the goal pose
-    int goalx_c = CONTXY2DISC(params.goalx, cellsize_m);
-    int goaly_c = CONTXY2DISC(params.goaly, cellsize_m);
+    int goalx_c = CONTXY2DISC(params.goalx, params.cellsize_m);
+    int goaly_c = CONTXY2DISC(params.goaly, params.cellsize_m);
     int goaltheta_c = ContTheta2Disc(params.goaltheta, params.numThetas);
     printf("goal_c: %d %d %d\n", goalx_c, goaly_c, goaltheta_c);
 
@@ -151,15 +149,15 @@ void navigationLoop(
 
         // simulate sensing the cells
         for (int i = 0; i < (int)sensecells.size(); i++) {
-            int x = CONTXY2DISC(startx, cellsize_m) + sensecells.at(i).x;
-            int y = CONTXY2DISC(starty, cellsize_m) + sensecells.at(i).y;
+            int x = CONTXY2DISC(startx, params.cellsize_m) + sensecells.at(i).x;
+            int y = CONTXY2DISC(starty, params.cellsize_m) + sensecells.at(i).y;
 
             // ignore if outside the map
-            if (x < 0 || x >= size_x || y < 0 || y >= size_y) {
+            if (x < 0 || x >= params.size_x || y < 0 || y >= params.size_y) {
                 continue;
             }
 
-            int index = x + y * size_x;
+            int index = x + y * params.size_x;
             unsigned char truecost = trueenvironment_navxythetalat.GetMapCost(x, y);
             // update the cell if we haven't seen it before
             if (map[index] != truecost) {
@@ -191,8 +189,8 @@ void navigationLoop(
             }
         }
 
-        int startx_c = CONTXY2DISC(startx, cellsize_m);
-        int starty_c = CONTXY2DISC(starty, cellsize_m);
+        int startx_c = CONTXY2DISC(startx, params.cellsize_m);
+        int starty_c = CONTXY2DISC(starty, params.cellsize_m);
         int starttheta_c = ContTheta2Disc(starttheta, params.numThetas);
 
         // plan a path
@@ -276,8 +274,8 @@ void navigationLoop(
             }
 
             // move
-            startx = DISCXY2CONT(newx, cellsize_m);
-            starty = DISCXY2CONT(newy, cellsize_m);
+            startx = DISCXY2CONT(newx, params.cellsize_m);
+            starty = DISCXY2CONT(newy, params.cellsize_m);
             starttheta = DiscTheta2Cont(newtheta, params.numThetas);
 
             // update the environment
@@ -347,37 +345,28 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
     pt_m.y = halfwidth;
     perimeterptsV.push_back(pt_m);
 
-    //	perimeterptsV.clear();
-
     // initialize true map from the environment file without perimeter or motion primitives
     if (!trueenvironment_navxythetalat.InitializeEnv(envCfgFilename)) {
         throw SBPL_Exception("ERROR: InitializeEnv failed");
     }
 
     // environment parameters
-    int size_x = -1, size_y = -1, num_thetas = -1;
-    double startx = -1, starty = -1, starttheta = -1;
-    double goalx = -1, goaly = -1, goaltheta = -1;
-    double cellsize_m = 0.0, nominalvel_mpersecs = 0.0, timetoturn45degsinplace_secs = 0.0;
-    unsigned char obsthresh = 0;
-    vector<SBPL_xytheta_mprimitive> motionprimitiveV;
-
-    // additional environment parameters
-    unsigned char costinscribed_thresh = 0;
-    unsigned char costcircum_thresh = 0;
+    EnvNAVXYTHETALAT_InitParms params;
+    std::vector<SBPL_xytheta_mprimitive> motionprimitiveV;
 
     // get environment parameters from the true environment
-    trueenvironment_navxythetalat.GetEnvParms(&size_x, &size_y, &num_thetas, &startx, &starty, &starttheta, &goalx,
-                                              &goaly, &goaltheta, &cellsize_m, &nominalvel_mpersecs,
-                                              &timetoturn45degsinplace_secs, &obsthresh, &motionprimitiveV);
-    costinscribed_thresh = trueenvironment_navxythetalat.GetEnvParameter("cost_inscribed_thresh");
-    costcircum_thresh = trueenvironment_navxythetalat.GetEnvParameter("cost_possibly_circumscribed_thresh");
+    trueenvironment_navxythetalat.GetEnvParms(
+        &params.size_x, &params.size_y, &params.numThetas, &params.startx, &params.starty, &params.starttheta,
+        &params.goalx, &params.goaly, &params.goaltheta,
+        &params.cellsize_m, &params.nominalvel_mpersecs,
+        &params.timetoturn45degsinplace_secs, &params.obsthresh, &motionprimitiveV,
+        &params.costinscribed_thresh, &params.costcircum_thresh);
 
     // print the map
     if (bPrintMap) {
         printf("true map:\n");
-        for (int y = 0; y < size_y; y++) {
-            for (int x = 0; x < size_x; x++) {
+        for (int y = 0; y < params.size_y; y++) {
+            for (int x = 0; x < params.size_x; x++) {
                 printf("%3d ", trueenvironment_navxythetalat.GetMapCost(x, y));
             }
             printf("\n");
@@ -386,47 +375,26 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
     }
 
     // create an empty map
-    unsigned char* map = new unsigned char[size_x * size_y];
-    for (int i = 0; i < size_x * size_y; i++) {
+    unsigned char* map = new unsigned char[params.size_x * params.size_y];
+    for (int i = 0; i < params.size_x * params.size_y; i++) {
         map[i] = 0;
     }
 
     // check the start and goal obtained from the true environment
-    printf("start: %f %f %f, goal: %f %f %f\n", startx, starty, starttheta, goalx, goaly, goaltheta);
+    printf("start: %f %f %f, goal: %f %f %f\n",
+        params.startx, params.starty, params.starttheta,
+        params.goalx, params.goaly, params.goaltheta);
 
-    // set robot environment parameters (should be done before initialize function is called)
-    if (!environment_navxythetalat.SetEnvParameter("cost_inscribed_thresh", costinscribed_thresh)) {
-        throw SBPL_Exception("ERROR: failed to set parameters");
-    }
-    if (!environment_navxythetalat.SetEnvParameter("cost_possibly_circumscribed_thresh", costcircum_thresh)) {
-        throw SBPL_Exception("ERROR: failed to set parameters");
-    }
-
-    // initialize environment (should be called before initializing anything else)
-    EnvNAVXYTHETALAT_InitParms params;
-    params.startx = startx;
-    params.starty = starty;
-    params.starttheta = starttheta;
-    params.goalx = goalx;
-    params.goaly = goaly;
-    params.goaltheta = goaltheta;
     params.goaltol_x = goaltol_x;
     params.goaltol_y = goaltol_y;
     params.goaltol_theta = goaltol_theta;
     params.mapdata = map;
-    params.numThetas = num_thetas;
 
-    bool envInitialized = environment_navxythetalat.InitializeEnv(size_x, size_y, perimeterptsV, cellsize_m,
-                                                                  nominalvel_mpersecs, timetoturn45degsinplace_secs,
-                                                                  obsthresh, motPrimFilename, params);
+    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, params);
 
     if (!envInitialized) {
         throw SBPL_Exception("ERROR: InitializeEnv failed");
     }
-
-    // set start and goal states
-    environment_navxythetalat.SetStart(startx, starty, starttheta);
-    environment_navxythetalat.SetGoal(goalx, goaly, goaltheta);
 
     MDPConfig MDPCfg;
 
@@ -495,9 +463,7 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
         map,
         planner,
         params,
-        cellsize_m,
         sensingRange,
-        size_x, size_y,
         allocated_time_secs_foreachplan
     );
 
