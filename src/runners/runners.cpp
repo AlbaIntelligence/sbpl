@@ -168,16 +168,16 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
     costcircum_thresh = trueenvironment_navxythetalat.GetEnvParameter("cost_possibly_circumscribed_thresh");
 
     // print the map
-    if (bPrintMap) {
-        printf("true map:\n");
-        for (int y = 0; y < size_y; y++) {
-            for (int x = 0; x < size_x; x++) {
-                printf("%3d ", trueenvironment_navxythetalat.GetMapCost(x, y));
-            }
-            printf("\n");
-        }
-        printf("System Pause (return=%d)\n", system("pause"));
-    }
+//    if (bPrintMap) {
+//        printf("true map:\n");
+//        for (int y = 0; y < size_y; y++) {
+//            for (int x = 0; x < size_x; x++) {
+//                printf("%3d ", trueenvironment_navxythetalat.GetMapCost(x, y));
+//            }
+//            printf("\n");
+//        }
+//        printf("System Pause (return=%d)\n", system("pause"));
+//    }
 
     // create an empty map
     unsigned char* map = new unsigned char[size_x * size_y];
@@ -392,40 +392,40 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
         fflush(fSol);
 
         // print the map (robot's view of the world and current plan)
-        int startindex = startx_c + starty_c * size_x;
-        int goalindex = goalx_c + goaly_c * size_x;
-        for (int y = 0; bPrintMap && y < size_y; y++) {
-            for (int x = 0; x < size_x; x++) {
-                int index = x + y * size_x;
-                int cost = map[index];
-                cost = environment_navxythetalat.GetMapCost(x, y);
-
-                // check to see if it is on the path
-                bool bOnthePath = false;
-                for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
-                    int newx, newy, newtheta = 0;
-                    environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], newx, newy, newtheta);
-                    if (x == newx && y == newy) bOnthePath = true;
-                }
-
-                if (index != startindex && index != goalindex && !bOnthePath) {
-                    printf("%3d ", cost);
-                }
-                else if (index == startindex) {
-                    printf("  X ");
-                }
-                else if (index == goalindex) {
-                    printf("  G ");
-                }
-                else if (bOnthePath) {
-                    printf("  * ");
-                }
-                else {
-                    printf("? ");
-                }
-            }
-            printf("\n");
-        }
+//        int startindex = startx_c + starty_c * size_x;
+//        int goalindex = goalx_c + goaly_c * size_x;
+//        for (int y = 0; bPrintMap && y < size_y; y++) {
+//            for (int x = 0; x < size_x; x++) {
+//                int index = x + y * size_x;
+//                int cost = map[index];
+//                cost = environment_navxythetalat.GetMapCost(x, y);
+//
+//                // check to see if it is on the path
+//                bool bOnthePath = false;
+//                for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
+//                    int newx, newy, newtheta = 0;
+//                    environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], newx, newy, newtheta);
+//                    if (x == newx && y == newy) bOnthePath = true;
+//                }
+//
+//                if (index != startindex && index != goalindex && !bOnthePath) {
+//                    printf("%3d ", cost);
+//                }
+//                else if (index == startindex) {
+//                    printf("  X ");
+//                }
+//                else if (index == goalindex) {
+//                    printf("  G ");
+//                }
+//                else if (bOnthePath) {
+//                    printf("  * ");
+//                }
+//                else {
+//                    printf("? ");
+//                }
+//            }
+//            printf("\n");
+//        }
 
         // move along the path
         if (bPlanExists && (int)xythetaPath.size() > 1) {
