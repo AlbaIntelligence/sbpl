@@ -454,6 +454,20 @@ void EnvironmentNAVXYTHETALATTICE::ReadConfiguration(FILE* fCfg)
             EnvNAVXYTHETALATCfg.Grid2D[x][y] = dTemp;
         }
     }
+
+    EnvNAVXYTHETALATCfg.StartTheta = ContTheta2DiscNew(EnvNAVXYTHETALATCfg.StartTheta_rad);
+    if (EnvNAVXYTHETALATCfg.StartTheta < 0 ||
+        EnvNAVXYTHETALATCfg.StartTheta >= EnvNAVXYTHETALATCfg.NumThetaDirs)
+    {
+        throw new SBPL_Exception("ERROR: illegal start coordinates for theta");
+    }
+    EnvNAVXYTHETALATCfg.EndTheta = ContTheta2DiscNew(EnvNAVXYTHETALATCfg.EndTheta_rad);
+    if (EnvNAVXYTHETALATCfg.EndTheta < 0 ||
+        EnvNAVXYTHETALATCfg.EndTheta >= EnvNAVXYTHETALATCfg.NumThetaDirs)
+    {
+        throw new SBPL_Exception("ERROR: illegal goal coordinates for theta");
+    }
+
 }
 
 bool EnvironmentNAVXYTHETALATTICE::ReadinCell(
@@ -2670,6 +2684,8 @@ EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup(int X, int Y, int Theta)
     clock_t currenttime = clock();
 #endif
 
+    SBPL_PRINTF("1 %d %d %d", X, Y, Theta);
+
     EnvNAVXYTHETALATHashEntry_t* HashEntry = new EnvNAVXYTHETALATHashEntry_t;
 
     HashEntry->X = X;
@@ -2684,13 +2700,20 @@ EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup(int X, int Y, int Theta)
 
     int index = XYTHETA2INDEX(X,Y,Theta);
 
+    int maxsize = EnvNAVXYTHETALATCfg.EnvWidth_c * EnvNAVXYTHETALATCfg.EnvHeight_c * EnvNAVXYTHETALATCfg.NumThetaDirs;
+
+    SBPL_PRINTF("2 %d %d", index, maxsize);
+
 #if DEBUG
     if (Coord2StateIDHashTable_lookup[index] != NULL) {
         throw SBPL_Exception("ERROR: creating hash entry for non-NULL hashentry");
     }
 #endif
+    SBPL_PRINTF("3 %d %d", index, maxsize);
 
     Coord2StateIDHashTable_lookup[index] = HashEntry;
+
+    SBPL_PRINTF("4 %d %d", HashEntry->stateID, StateID2IndexMapping.size());
 
     // insert into and initialize the mappings
     int* entry = new int[NUMOFINDICES_STATEID2IND];
@@ -2699,9 +2722,13 @@ EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup(int X, int Y, int Theta)
         StateID2IndexMapping[HashEntry->stateID][i] = -1;
     }
 
+    SBPL_PRINTF("4");
+
     if (HashEntry->stateID != (int)StateID2IndexMapping.size() - 1) {
         throw SBPL_Exception("ERROR in Env... function: last state has incorrect stateID");
     }
+
+
 
 #if TIME_DEBUG
     time_createhash += clock()-currenttime;
@@ -3069,7 +3096,11 @@ void EnvironmentNAVXYTHETALAT::InitializeEnvironment()
                 EnvNAVXYTHETALATCfg.EndX_c,
                 EnvNAVXYTHETALATCfg.EndY_c,
                 EnvNAVXYTHETALATCfg.EndTheta);
+
+
+
     }
+
     EnvNAVXYTHETALAT.goalstateid = HashEntry->stateID;
 
     // initialized
