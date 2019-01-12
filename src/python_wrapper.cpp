@@ -82,80 +82,85 @@ public:
         return params;
     }
 
+
+    py::safe_array<unsigned char> get_costmap() const {
+
+        EnvNAVXYTHETALAT_InitParms params = this->get_params();
+
+        py::safe_array<unsigned char> result_array({params.size_y, params.size_x});
+        auto result = result_array.mutable_unchecked();
+
+        for (int y = 0; y < params.size_y; y++) {
+            for (int x = 0; x < params.size_x; x++) {
+                result(y, x) = _environment.GetMapCost(x, y);
+            }
+        }
+
+        return result_array;
+    }
+
+
 private:
     EnvironmentNAVXYTHETALAT _environment;
 
 };
 
 
+class SBPLPlannerWrapper {
+public:
+    SBPLPlannerWrapper(SBPLPlanner* pPlanner)
+       : _pPlanner(pPlanner)
+    {
+
+    }
+
+    const SBPLPlanner* planner() const {return this->_pPlanner;}
+    SBPLPlanner* planner() {return this->_pPlanner;}
+
+private:
+    SBPLPlanner* _pPlanner;
+};
+
+
+template<typename PlannerT>
+class SpecificPlannerWrapper: public SBPLPlannerWrapper {
+public:
+    SpecificPlannerWrapper(EnvironmentNAVXYTHETALATWrapper& envWrapper, bool bforwardsearch)
+       : _planner(&envWrapper.env(), bforwardsearch)
+       , SBPLPlannerWrapper(&_planner)
+    {
+
+    }
+private:
+    PlannerT _planner;
+};
+
+
+typedef SpecificPlannerWrapper<ARAPlanner> ARAPlannerWrapper;
+typedef SpecificPlannerWrapper<ADPlanner> ADPlannerWrapper;
+typedef SpecificPlannerWrapper<anaPlanner> anaPlannerWrapper;
+
+
+
 int run_planandnavigatexythetalat(
-    char* plannerName,
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
-    char* motPrimFilename,
-    bool forwardSearch) {
+    SBPLPlannerWrapper& plannerWrapper,
+    char* motPrimFilename) {
 
-    PlannerType plannerType = StrToPlannerType(plannerName);
     double allocated_time_secs_foreachplan = 10.0; // in seconds
     double initialEpsilon = 3.0;
     bool bsearchuntilfirstsolution = false;
-    bool bforwardsearch = forwardSearch;
 
     double goaltol_x = 0.001, goaltol_y = 0.001, goaltol_theta = 0.001;
 
-    bool bPrintMap = false;
-
-    // environment parameters
-
-    EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
-
-    // print the map
-    if (bPrintMap) {
-        printf("true map:\n");
-        for (int y = 0; y < params.size_y; y++) {
-            for (int x = 0; x < params.size_x; x++) {
-                printf("%3d ", trueEnvWrapper.env().GetMapCost(x, y));
-            }
-            printf("\n");
-        }
-        printf("System Pause (return=%d)\n", system("pause"));
-    }
-
-    // check the start and goal obtained from the true environment
-    printf("start: %f %f %f, goal: %f %f %f\n",
-        params.startx, params.starty, params.starttheta,
-        params.goalx, params.goaly, params.goaltheta);
+    SBPLPlanner* planner = plannerWrapper.planner();
 
     MDPConfig MDPCfg;
-
     // initialize MDP info
     if (!envWrapper.env().InitializeMDPCfg(&MDPCfg)) {
         throw SBPL_Exception("ERROR: InitializeMDPCfg failed");
     }
-
-    // create a planner
-    SBPLPlanner* planner = NULL;
-    switch (plannerType) {
-    case PLANNER_TYPE_ARASTAR:
-        printf("Initializing ARAPlanner...\n");
-        planner = new ARAPlanner(&envWrapper.env(), bforwardsearch);
-        break;
-    case PLANNER_TYPE_ADSTAR:
-        printf("Initializing ADPlanner...\n");
-        planner = new ADPlanner(&envWrapper.env(), bforwardsearch);
-        break;
-    case PLANNER_TYPE_RSTAR:
-        printf("Invalid configuration: xytheta environment does not support rstar planner...\n");
-        return 0;
-    case PLANNER_TYPE_ANASTAR:
-        printf("Initializing anaPlanner...\n");
-        planner = new anaPlanner(&envWrapper.env(), bforwardsearch);
-        break;
-    default:
-        printf("Invalid planner type\n");
-        break;
-    }
-
     // set the start and goal states for the planner and other search variables
     if (planner->set_start(MDPCfg.startstateid) == 0) {
         throw SBPL_Exception("ERROR: failed to set start state");
@@ -187,6 +192,9 @@ int run_planandnavigatexythetalat(
 
     int sensingRange = (int)ceil(maxMotPrimLength);
 
+    // environment parameters
+    EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
+
     // create an empty map
     unsigned char* map = new unsigned char[params.size_x * params.size_y];
     for (int i = 0; i < params.size_x * params.size_y; i++) {
@@ -205,7 +213,6 @@ int run_planandnavigatexythetalat(
     );
 
     delete[] map;
-    delete planner;
 
     return 1;
 }
@@ -217,11 +224,11 @@ int run_planandnavigatexythetalat(
  *
  */
 PYBIND11_MODULE(_sbpl_module, m) {
-   m.doc() = "Python wrapper for SBPL planners";
+    m.doc() = "Python wrapper for SBPL planners";
 
-   m.def("planandnavigatexythetalat", &run_planandnavigatexythetalat);
+    m.def("planandnavigatexythetalat", &run_planandnavigatexythetalat);
 
-   py::class_<EnvironmentNAVXYTHETALATWrapper>(m, "EnvironmentNAVXYTHETALAT")
+    py::class_<EnvironmentNAVXYTHETALATWrapper>(m, "EnvironmentNAVXYTHETALAT")
        .def(py::init<const char*>(),
            "config_filename"_a
        )
@@ -230,9 +237,10 @@ PYBIND11_MODULE(_sbpl_module, m) {
                      const py::safe_array<unsigned char>&,
                      EnvNAVXYTHETALAT_InitParms>())
        .def("get_params", &EnvironmentNAVXYTHETALATWrapper::get_params)
-   ;
+       .def("get_costmap", &EnvironmentNAVXYTHETALATWrapper::get_costmap)
+    ;
 
-   py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")
+    py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")
         .def_readwrite("size_x", &EnvNAVXYTHETALAT_InitParms::size_x)
         .def_readwrite("size_y", &EnvNAVXYTHETALAT_InitParms::size_y)
         .def_readwrite("numThetas", &EnvNAVXYTHETALAT_InitParms::numThetas)
@@ -248,6 +256,21 @@ PYBIND11_MODULE(_sbpl_module, m) {
         .def_readwrite("obsthresh", &EnvNAVXYTHETALAT_InitParms::obsthresh)
         .def_readwrite("costinscribed_thresh", &EnvNAVXYTHETALAT_InitParms::costinscribed_thresh)
         .def_readwrite("costcircum_thresh", &EnvNAVXYTHETALAT_InitParms::costcircum_thresh)
+    ;
+
+
+    py::class_<SBPLPlannerWrapper> base_planner(m, "SBPLPlannerWrapper");
+
+    py::class_<ARAPlannerWrapper>(m, "ARAPlanner", base_planner)
+       .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())
+    ;
+
+    py::class_<ADPlannerWrapper>(m, "ADPlanner", base_planner)
+       .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())
+    ;
+
+    py::class_<anaPlannerWrapper>(m, "anaPlanner", base_planner)
+       .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())
     ;
 
 }
