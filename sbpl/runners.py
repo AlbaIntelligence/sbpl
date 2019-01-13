@@ -87,6 +87,11 @@ if __name__ == '__main__':
     # planner = create_planner("adstar", env, False)
     # planner = create_planner("anastar", env, False)
 
+    params = env.get_params()
+    goal_pose = np.array([params.goalx, params.goaly, params.goaltheta])
+    print("goal cell: %s" % env.xytheta_real_to_cell(goal_pose))
+
+
     _sbpl_module.planandnavigatexythetalat(
         # os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
         true_env,

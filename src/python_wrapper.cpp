@@ -161,6 +161,21 @@ public:
         return std::move(primitives);
     }
 
+    py::safe_array<int> xytheta_real_to_cell(const py::safe_array<double>& pose_array) const {
+
+        py::safe_array<int> result_array({3});
+        auto result = result_array.mutable_unchecked();
+
+        auto pose = pose_array.unchecked<1>();
+
+        auto params = this->get_params();
+        result(0) = CONTXY2DISC(pose(0), params.cellsize_m);
+        result(1) = CONTXY2DISC(pose(1), params.cellsize_m);
+        result(2) = ContTheta2Disc(pose(2), params.numThetas);
+
+        return result_array;
+    }
+
 
 private:
     EnvironmentNAVXYTHETALAT _environment;
@@ -264,12 +279,6 @@ int run_planandnavigatexythetalat(
         throw SBPL_Exception("ERROR: could not open solution file");
     }
 
-    // print the goal pose
-    int goalx_c = CONTXY2DISC(params.goalx, params.cellsize_m);
-    int goaly_c = CONTXY2DISC(params.goaly, params.cellsize_m);
-    int goaltheta_c = ContTheta2Disc(params.goaltheta, params.numThetas);
-    printf("goal_c: %d %d %d\n", goalx_c, goaly_c, goaltheta_c);
-
     // now comes the main loop
     while (fabs(startx - params.goalx) > goaltol_x || fabs(starty - params.goaly) > goaltol_y || fabs(starttheta - params.goaltheta)
         > goaltol_theta) {
@@ -339,6 +348,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def("get_params", &EnvironmentNAVXYTHETALATWrapper::get_params)
        .def("get_costmap", &EnvironmentNAVXYTHETALATWrapper::get_costmap)
        .def("get_motion_primitives", &EnvironmentNAVXYTHETALATWrapper::get_motion_primitives)
+       .def("xytheta_real_to_cell", &EnvironmentNAVXYTHETALATWrapper::xytheta_real_to_cell)
     ;
 
     py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")
