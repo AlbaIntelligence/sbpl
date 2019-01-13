@@ -246,16 +246,50 @@ int run_planandnavigatexythetalat(
         map[i] = 0;
     }
 
-    navigationLoop(
-        envWrapper.env(),
-        trueEnvWrapper.env(),
-        map,
-        planner,
-        params,
-        sensingRange,
-        allocated_time_secs_foreachplan,
-        goaltol_x, goaltol_y, goaltol_theta
-    );
+    std::vector<sbpl_2Dcell_t> sensecells;
+    for (int x = -sensingRange; x <= sensingRange; x++) {
+        for (int y = -sensingRange; y <= sensingRange; y++) {
+            sensecells.push_back(sbpl_2Dcell_t(x, y));
+        }
+    }
+
+    double startx = params.startx;
+    double starty = params.starty;
+    double starttheta = params.starttheta;
+
+    // create a file to hold the solution vector
+    const char* sol = "sol.txt";
+    FILE* fSol = fopen(sol, "w");
+    if (fSol == NULL) {
+        throw SBPL_Exception("ERROR: could not open solution file");
+    }
+
+    // print the goal pose
+    int goalx_c = CONTXY2DISC(params.goalx, params.cellsize_m);
+    int goaly_c = CONTXY2DISC(params.goaly, params.cellsize_m);
+    int goaltheta_c = ContTheta2Disc(params.goaltheta, params.numThetas);
+    printf("goal_c: %d %d %d\n", goalx_c, goaly_c, goaltheta_c);
+
+    // now comes the main loop
+    while (fabs(startx - params.goalx) > goaltol_x || fabs(starty - params.goaly) > goaltol_y || fabs(starttheta - params.goaltheta)
+        > goaltol_theta) {
+        navigationIteration(
+            startx, starty, starttheta,
+            trueEnvWrapper.env(),
+            envWrapper.env(),
+            sensecells,
+            map,
+            planner,
+            params,
+            allocated_time_secs_foreachplan,
+            fSol
+        );
+    }
+
+    printf("goal reached!\n");
+
+    fflush(NULL);
+    fclose(fSol);
 
     delete[] map;
 

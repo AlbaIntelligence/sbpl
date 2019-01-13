@@ -30,6 +30,18 @@ EnvironmentType StrToEnvironmentType(const char* str);
 int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, char* motPrimFilename, bool forwardSearch);
 
 
+void navigationIteration(
+    double& startx, double& starty, double& starttheta,
+    const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat,
+    EnvironmentNAVXYTHETALAT& environment_navxythetalat,
+    std::vector<sbpl_2Dcell_t>& sensecells,
+    unsigned char* map,
+    SBPLPlanner* planner,
+    const EnvNAVXYTHETALAT_InitParms& params,
+    double allocated_time_secs_foreachplan,
+    FILE* fSol
+);
+
 void navigationLoop(
     EnvironmentNAVXYTHETALAT& environment_navxythetalat,
     const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat,
