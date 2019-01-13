@@ -107,19 +107,19 @@ void navigationIteration(
     SBPLPlanner* planner,
     const EnvNAVXYTHETALAT_InitParms& params,
     double allocated_time_secs_foreachplan,
-    FILE* fSol
+    double& plan_time,
+    double& solution_epsilon,
+    std::vector<sbpl_xy_theta_pt_t>& xythetaPath,
+    std::vector<sbpl_xy_theta_cell_t>& xythetaCellPath
 )
 {
-
     vector<int> preds_of_changededgesIDV;
     vector<nav2dcell_t> changedcellsV;
     vector<int> solution_stateIDs_V;
 
-
     //simulate sensor data update
     bool bChanges = false;
     bool bPrint = false;
-
 
     // simulate sensing the cells
     for (int i = 0; i < (int)sensecells.size(); i++) {
@@ -177,27 +177,16 @@ void navigationIteration(
            planner->get_solution_eps());
     environment_navxythetalat.PrintTimeStat(stdout);
 
-    // write the solution to sol.txt
-    fprintf(fSol, "plan time=%.5f eps=%.2f\n", (clock() - TimeStarted) / ((double)CLOCKS_PER_SEC),
-            planner->get_solution_eps());
-    fflush(fSol);
-
-    vector<sbpl_xy_theta_pt_t> xythetaPath;
+    plan_time = (clock() - TimeStarted) / ((double)CLOCKS_PER_SEC);
+    solution_epsilon = planner->get_solution_eps();
 
     environment_navxythetalat.ConvertStateIDPathintoXYThetaPath(&solution_stateIDs_V, &xythetaPath);
     printf("actual path (with intermediate poses) size=%d\n", (unsigned int)xythetaPath.size());
-    for (unsigned int i = 0; i < xythetaPath.size(); i++) {
-        fprintf(fSol, "%.3f %.3f %.3f\n", xythetaPath.at(i).x, xythetaPath.at(i).y, xythetaPath.at(i).theta);
-    }
-    fprintf(fSol, "*********\n");
-
     for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
-        int newx, newy, newtheta = 0;
-        environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], newx, newy, newtheta);
-        fprintf(fSol, "%d %d %d\n", newx, newy, newtheta);
+        sbpl_xy_theta_cell_t xytheta_cell;
+        environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], xytheta_cell.x, xytheta_cell.y, xytheta_cell.theta);
+        xythetaCellPath.push_back(xytheta_cell);
     }
-    fflush(fSol);
-
     // print the map (robot's view of the world and current plan)
 //        int startindex = startx_c + starty_c * size_x;
 //        int goalindex = goalx_c + goaly_c * size_x;
@@ -310,6 +299,10 @@ void navigationLoop(
     // now comes the main loop
     while (fabs(startx - params.goalx) > goaltol_x || fabs(starty - params.goaly) > goaltol_y || fabs(starttheta - params.goaltheta)
         > goaltol_theta) {
+
+        double plan_time, solution_epsilon;
+        std::vector<sbpl_xy_theta_pt_t> xythetaPath;
+        std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
         navigationIteration(
             startx, starty, starttheta,
             trueenvironment_navxythetalat,
@@ -319,8 +312,25 @@ void navigationLoop(
             planner,
             params,
             allocated_time_secs_foreachplan,
-            fSol
+            plan_time,
+            solution_epsilon,
+            xythetaPath,
+            xythetaCellPath
         );
+
+        // write the solution to sol.txt
+        fprintf(fSol, "plan time=%.5f eps=%.2f\n", plan_time, solution_epsilon);
+        fflush(fSol);
+
+        for (unsigned int i = 0; i < xythetaPath.size(); i++) {
+            fprintf(fSol, "%.3f %.3f %.3f\n", xythetaPath.at(i).x, xythetaPath.at(i).y, xythetaPath.at(i).theta);
+        }
+        fprintf(fSol, "*********\n");
+        for (unsigned int i = 0; i < xythetaCellPath.size(); i++) {
+            fprintf(fSol, "%d %d %d\n", xythetaCellPath.at(i).x, xythetaCellPath.at(i).y, xythetaCellPath.at(i).theta);
+        }
+
+        fflush(fSol);
     }
 
     printf("goal reached!\n");

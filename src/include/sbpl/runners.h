@@ -39,7 +39,10 @@ void navigationIteration(
     SBPLPlanner* planner,
     const EnvNAVXYTHETALAT_InitParms& params,
     double allocated_time_secs_foreachplan,
-    FILE* fSol
+    double& plan_time,
+    double& solution_epsilon,
+    std::vector<sbpl_xy_theta_pt_t>& xythetaPath,
+    std::vector<sbpl_xy_theta_cell_t>& xythetaCellPath
 );
 
 void navigationLoop(

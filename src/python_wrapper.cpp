@@ -272,16 +272,13 @@ int run_planandnavigatexythetalat(
     double starty = params.starty;
     double starttheta = params.starttheta;
 
-    // create a file to hold the solution vector
-    const char* sol = "sol.txt";
-    FILE* fSol = fopen(sol, "w");
-    if (fSol == NULL) {
-        throw SBPL_Exception("ERROR: could not open solution file");
-    }
-
     // now comes the main loop
     while (fabs(startx - params.goalx) > goaltol_x || fabs(starty - params.goaly) > goaltol_y || fabs(starttheta - params.goaltheta)
         > goaltol_theta) {
+        double plan_time, solution_epsilon;
+        std::vector<sbpl_xy_theta_pt_t> xythetaPath;
+        std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
+
         navigationIteration(
             startx, starty, starttheta,
             trueEnvWrapper.env(),
@@ -291,14 +288,14 @@ int run_planandnavigatexythetalat(
             planner,
             params,
             allocated_time_secs_foreachplan,
-            fSol
+            plan_time,
+            solution_epsilon,
+            xythetaPath,
+            xythetaCellPath
         );
     }
 
     printf("goal reached!\n");
-
-    fflush(NULL);
-    fclose(fSol);
 
     delete[] map;
 
