@@ -91,11 +91,13 @@ if __name__ == '__main__':
     goal_pose = np.array([params.goalx, params.goaly, params.goaltheta])
     print("goal cell: %s" % env.xytheta_real_to_cell(goal_pose))
 
+    current_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
 
     _sbpl_module.planandnavigatexythetalat(
         # os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
         true_env,
         env,
         planner,
-        sensing_range
+        sensing_range,
+        current_map
     )

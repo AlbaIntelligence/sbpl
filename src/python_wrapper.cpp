@@ -244,7 +244,8 @@ int run_planandnavigatexythetalat(
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
     SBPLPlannerWrapper& plannerWrapper,
-    int sensingRange) {
+    int sensingRange,
+    py::safe_array<unsigned char>& empty_map) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
 
@@ -256,10 +257,7 @@ int run_planandnavigatexythetalat(
     EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
 
     // create an empty map
-    unsigned char* map = new unsigned char[params.size_x * params.size_y];
-    for (int i = 0; i < params.size_x * params.size_y; i++) {
-        map[i] = 0;
-    }
+    unsigned char* map = &empty_map.mutable_unchecked<2>()(0, 0);
 
     std::vector<sbpl_2Dcell_t> sensecells;
     for (int x = -sensingRange; x <= sensingRange; x++) {
@@ -294,10 +292,7 @@ int run_planandnavigatexythetalat(
             xythetaCellPath
         );
     }
-
     printf("goal reached!\n");
-
-    delete[] map;
 
     return 1;
 }
