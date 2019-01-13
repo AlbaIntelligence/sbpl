@@ -73,7 +73,5 @@ if __name__ == '__main__':
         # os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
         true_env,
         env,
-        planner,
-        os.path.join(mprim_folder(), 'pr2.mprim'),
-        # os.path.join(mprim_folder(), 'pr2_10cm.mprim'),
+        planner
         )

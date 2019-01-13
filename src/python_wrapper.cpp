@@ -166,8 +166,7 @@ typedef SpecificPlannerWrapper<anaPlanner> anaPlannerWrapper;
 int run_planandnavigatexythetalat(
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
-    SBPLPlannerWrapper& plannerWrapper,
-    char* motPrimFilename) {
+    SBPLPlannerWrapper& plannerWrapper) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
 
