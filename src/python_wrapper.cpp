@@ -65,7 +65,7 @@ public:
     }
 
     py::safe_array<double> get_intermediate_states() const {
-        py::safe_array<double> result_array({_primitive.intermptV.size(), 3});
+        py::safe_array<double> result_array({(int)_primitive.intermptV.size(), 3});
         auto result = result_array.mutable_unchecked();
         for (auto i =0; i < _primitive.intermptV.size(); ++i) {
             result(i, 0) = _primitive.intermptV[i].x;
@@ -154,8 +154,8 @@ public:
     std::vector<SBPL_xytheta_mprimitiveWrapper> get_motion_primitives() const {
         std::vector<SBPL_xytheta_mprimitiveWrapper> primitives;
         const EnvNAVXYTHETALATConfig_t* cfg = _environment.GetEnvNavConfig();
-        for (int i = 0; i < (int)cf8i5imV.size(); i++) {
-            primitives.push_back(SBPL_8xytheta_mprimitiveWrapper(cfg-clty7i strtetdhftdggdtegergfefdgeregwfsget  V.at(i)));
+        for (int i = 0; i < (int)cfg->mprimV.size(); i++) {
+            primitives.push_back(SBPL_xytheta_mprimitiveWrapper(cfg->mprimV.at(i)));
         }
 
         return std::move(primitives);
@@ -228,34 +228,14 @@ typedef SpecificPlannerWrapper<anaPlanner> anaPlannerWrapper;
 int run_planandnavigatexythetalat(
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
-    SBPLPlannerWrapper& plannerWrapper) {
+    SBPLPlannerWrapper& plannerWrapper,
+    int sensingRange) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
 
     double goaltol_x = 0.001, goaltol_y = 0.001, goaltol_theta = 0.001;
 
     SBPLPlanner* planner = plannerWrapper.planner();
-
-    // compute sensing as a square surrounding the robot with length twice that of the
-    // longest motion primitive
-
-    double maxMotPrimLengthSquared = 0.0;
-    double maxMotPrimLength = 0.0;
-    const EnvNAVXYTHETALATConfig_t* cfg = envWrapper.env().GetEnvNavConfig();
-    for (int i = 0; i < (int)cfg->mprimV.size(); i++) {
-        const SBPL_xytheta_mprimitive& mprim = cfg->mprimV.at(i);
-        int dx = mprim.endcell.x;
-        int dy = mprim.endcell.y;
-        if (dx * dx + dy * dy > maxMotPrimLengthSquared) {
-            std::cout << "Found a longer motion primitive with dx = " << dx << " and dy = " << dy
-                << " from starttheta = " << (int)mprim.starttheta_c << std::endl;
-            maxMotPrimLengthSquared = dx * dx + dy * dy;
-        }
-    }
-    maxMotPrimLength = sqrt((double)maxMotPrimLengthSquared);
-    std::cout << "Maximum motion primitive length: " << maxMotPrimLength << std::endl;
-
-    int sensingRange = (int)ceil(maxMotPrimLength);
 
     // environment parameters
     EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
