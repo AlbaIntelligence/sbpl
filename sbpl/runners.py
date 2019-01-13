@@ -61,6 +61,11 @@ if __name__ == '__main__':
     env = _sbpl_module.EnvironmentNAVXYTHETALAT(footprint, motion_primitives, empty_map, params)
 
     planner = create_planner("arastar", env, False)
+    planner.set_start_goal_from_env(env)
+    planner.set_planning_params(
+        initial_epsilon=3.0,
+        search_until_first_solution=False
+    )
     # planner = create_planner("adstar", env, False)
     # planner = create_planner("anastar", env, False)
 

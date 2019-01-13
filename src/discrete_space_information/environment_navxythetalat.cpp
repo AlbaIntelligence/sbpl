@@ -2041,7 +2041,7 @@ bool EnvironmentNAVXYTHETALATTICE::InitGeneral(
     return true;
 }
 
-bool EnvironmentNAVXYTHETALATTICE::InitializeMDPCfg(MDPConfig* MDPCfg)
+bool EnvironmentNAVXYTHETALATTICE::InitializeMDPCfg(MDPConfig* MDPCfg) const
 {
     // initialize MDPCfg with the start and goal ids
     MDPCfg->goalstateid = EnvNAVXYTHETALAT.goalstateid;

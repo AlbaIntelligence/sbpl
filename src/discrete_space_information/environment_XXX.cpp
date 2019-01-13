@@ -276,7 +276,7 @@ bool EnvironmentXXX::InitializeEnv(const char* sEnvFile)
     return true;
 }
 
-bool EnvironmentXXX::InitializeMDPCfg(MDPConfig *MDPCfg)
+bool EnvironmentXXX::InitializeMDPCfg(MDPConfig *MDPCfg) const
 {
     //initialize MDPCfg with the start and goal ids
     MDPCfg->goalstateid = EnvXXX.goalstateid;

@@ -117,6 +117,27 @@ public:
     const SBPLPlanner* planner() const {return this->_pPlanner;}
     SBPLPlanner* planner() {return this->_pPlanner;}
 
+    void set_start_goal_from_env(const EnvironmentNAVXYTHETALATWrapper& envWrapper) {
+
+        MDPConfig MDPCfg;
+        // initialize MDP info
+        if (!envWrapper.env().InitializeMDPCfg(&MDPCfg)) {
+            throw SBPL_Exception("ERROR: InitializeMDPCfg failed");
+        }
+        // set the start and goal states for the planner and other search variables
+        if (_pPlanner->set_start(MDPCfg.startstateid) == 0) {
+            throw SBPL_Exception("ERROR: failed to set start state");
+        }
+        if (_pPlanner->set_goal(MDPCfg.goalstateid) == 0) {
+            throw SBPL_Exception("ERROR: failed to set goal state");
+        }
+    }
+
+    void set_planning_params(double initialEpsilon, bool searchUntilFirstSolution) {
+        _pPlanner->set_initialsolution_eps(initialEpsilon);
+        _pPlanner->set_search_mode(searchUntilFirstSolution);
+    }
+
 private:
     SBPLPlanner* _pPlanner;
 };
@@ -149,27 +170,10 @@ int run_planandnavigatexythetalat(
     char* motPrimFilename) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
-    double initialEpsilon = 3.0;
-    bool bsearchuntilfirstsolution = false;
 
     double goaltol_x = 0.001, goaltol_y = 0.001, goaltol_theta = 0.001;
 
     SBPLPlanner* planner = plannerWrapper.planner();
-
-    MDPConfig MDPCfg;
-    // initialize MDP info
-    if (!envWrapper.env().InitializeMDPCfg(&MDPCfg)) {
-        throw SBPL_Exception("ERROR: InitializeMDPCfg failed");
-    }
-    // set the start and goal states for the planner and other search variables
-    if (planner->set_start(MDPCfg.startstateid) == 0) {
-        throw SBPL_Exception("ERROR: failed to set start state");
-    }
-    if (planner->set_goal(MDPCfg.goalstateid) == 0) {
-        throw SBPL_Exception("ERROR: failed to set goal state");
-    }
-    planner->set_initialsolution_eps(initialEpsilon);
-    planner->set_search_mode(bsearchuntilfirstsolution);
 
     // compute sensing as a square surrounding the robot with length twice that of the
     // longest motion primitive
@@ -260,6 +264,13 @@ PYBIND11_MODULE(_sbpl_module, m) {
 
 
     py::class_<SBPLPlannerWrapper> base_planner(m, "SBPLPlannerWrapper");
+    base_planner
+        .def("set_start_goal_from_env", &SBPLPlannerWrapper::set_start_goal_from_env)
+        .def("set_planning_params", &SBPLPlannerWrapper::set_planning_params,
+            "initial_epsilon"_a,
+            "search_until_first_solution"_a
+        )
+    ;
 
     py::class_<ARAPlannerWrapper>(m, "ARAPlanner", base_planner)
        .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())

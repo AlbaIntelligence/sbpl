@@ -77,7 +77,7 @@ public:
     /**
      * \brief initialization of MDP data structure
      */
-    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg) = 0;
+    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg) const = 0;
 
     /**
      * \brief heuristic estimate from state FromStateID to state ToStateID

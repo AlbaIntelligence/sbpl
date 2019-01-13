@@ -704,7 +704,7 @@ bool EnvironmentNAV2D::InitGeneral()
     return true;
 }
 
-bool EnvironmentNAV2D::InitializeMDPCfg(MDPConfig *MDPCfg)
+bool EnvironmentNAV2D::InitializeMDPCfg(MDPConfig *MDPCfg) const
 {
     //initialize MDPCfg with the start and goal ids
     MDPCfg->goalstateid = EnvNAV2D.goalstateid;
