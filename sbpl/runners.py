@@ -30,7 +30,7 @@ def env_examples_folder():
 
 if __name__ == '__main__':
     true_env = _sbpl_module.EnvironmentNAVXYTHETALAT(
-        os.path.join(env_examples_folder(), 'nav3d/env2.cfg')
+        os.path.join(env_examples_folder(), 'nav3d/env1.cfg')
         # os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg')
     )
     params = true_env.get_params()
@@ -54,8 +54,8 @@ if __name__ == '__main__':
     footprint[2, :] = (halflength, halfwidth)
     footprint[3, :] = (-halflength, halfwidth)
 
-    # motion_primitives = os.path.join(mprim_folder(), 'pr2.mprim')
-    motion_primitives = os.path.join(mprim_folder(), 'pr2_10cm.mprim')
+    motion_primitives = os.path.join(mprim_folder(), 'pr2.mprim')
+    # motion_primitives = os.path.join(mprim_folder(), 'pr2_10cm.mprim')
 
     empty_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
     env = _sbpl_module.EnvironmentNAVXYTHETALAT(footprint, motion_primitives, empty_map, params)
