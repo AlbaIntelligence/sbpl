@@ -413,7 +413,7 @@ public:
     /**
      * \brief get internal configuration data structure
      */
-    virtual const EnvNAVXYTHETALATConfig_t* GetEnvNavConfig();
+    virtual const EnvNAVXYTHETALATConfig_t* GetEnvNavConfig() const;
 
     virtual ~EnvironmentNAVXYTHETALATTICE();
 

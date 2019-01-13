@@ -60,18 +60,22 @@ if __name__ == '__main__':
     empty_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
     env = _sbpl_module.EnvironmentNAVXYTHETALAT(footprint, motion_primitives, empty_map, params)
 
-    planner = create_planner("arastar", env, False)
-    planner.set_start_goal_from_env(env)
-    planner.set_planning_params(
-        initial_epsilon=3.0,
-        search_until_first_solution=False
-    )
-    # planner = create_planner("adstar", env, False)
-    # planner = create_planner("anastar", env, False)
+    primitives = env.get_motion_primitives()
+    for p in primitives:
+        print(p)
 
-    _sbpl_module.planandnavigatexythetalat(
-        # os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
-        true_env,
-        env,
-        planner
-        )
+    # planner = create_planner("arastar", env, False)
+    # planner.set_start_goal_from_env(env)
+    # planner.set_planning_params(
+    #     initial_epsilon=3.0,
+    #     search_until_first_solution=False
+    # )
+    # # planner = create_planner("adstar", env, False)
+    # # planner = create_planner("anastar", env, False)
+    #
+    # _sbpl_module.planandnavigatexythetalat(
+    #     # os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
+    #     true_env,
+    #     env,
+    #     planner
+    #     )

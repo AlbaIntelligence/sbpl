@@ -1053,7 +1053,7 @@ int EnvironmentNAV2D::GetStateFromCoord(int x, int y)
     return OutHashEntry->stateID;
 }
 
-const EnvNAV2DConfig_t* EnvironmentNAV2D::GetEnvNavConfig()
+const EnvNAV2DConfig_t* EnvironmentNAV2D::GetEnvNavConfig() const
 {
     return &EnvNAV2DCfg;
 }

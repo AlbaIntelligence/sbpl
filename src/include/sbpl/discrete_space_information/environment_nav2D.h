@@ -346,7 +346,7 @@ public:
     /**
      * \brief access to internal configuration data structure
      */
-    virtual const EnvNAV2DConfig_t* GetEnvNavConfig();
+    virtual const EnvNAV2DConfig_t* GetEnvNavConfig() const;
 
     EnvironmentNAV2D();
     ~EnvironmentNAV2D();

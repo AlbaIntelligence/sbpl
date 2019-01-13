@@ -2126,7 +2126,7 @@ void EnvironmentNAVXYTHETALATTICE::GetLazySuccsWithUniqueIds(
     GetLazySuccsWithUniqueIds(SourceStateID, SuccIDV, CostV, isTrueCost, NULL);
 }
 
-const EnvNAVXYTHETALATConfig_t* EnvironmentNAVXYTHETALATTICE::GetEnvNavConfig()
+const EnvNAVXYTHETALATConfig_t* EnvironmentNAVXYTHETALATTICE::GetEnvNavConfig() const
 {
     return &EnvNAVXYTHETALATCfg;
 }

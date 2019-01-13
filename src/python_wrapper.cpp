@@ -30,6 +30,58 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 
+
+//struct SBPL_xytheta_mprimitive
+//{
+//    int motprimID;
+//    unsigned char starttheta_c;
+//    int additionalactioncostmult;
+//    sbpl_xy_theta_cell_t endcell;
+//    double turning_radius;
+//    //intermptV start at 0,0,starttheta and end at endcell in continuous
+//    //domain with half-bin less to account for 0,0 start
+//    std::vector<sbpl_xy_theta_pt_t> intermptV;
+//};
+
+class SBPL_xytheta_mprimitiveWrapper {
+public:
+    SBPL_xytheta_mprimitiveWrapper(const SBPL_xytheta_mprimitive& motion_primitive)
+        : _primitive(motion_primitive)
+    { }
+
+    int get_motprimID() const {return _primitive.motprimID;};
+    unsigned char get_start_theta_cell() const {return _primitive.starttheta_c;};
+    int get_additionalactioncostmult() const {return _primitive.additionalactioncostmult;};
+
+    double get_turning_radius() const {return _primitive.turning_radius;};
+
+    py::safe_array<int> get_endcell() const {
+        py::safe_array<int> result_array({3});
+        auto result = result_array.mutable_unchecked();
+        result(0) = _primitive.endcell.x;
+        result(1) = _primitive.endcell.y;
+        result(2) = _primitive.endcell.theta;
+        return result_array;
+    }
+
+    py::safe_array<double> get_intermediate_states() const {
+        py::safe_array<double> result_array({_primitive.intermptV.size(), 3});
+        auto result = result_array.mutable_unchecked();
+        for (auto i =0; i < _primitive.intermptV.size(); ++i) {
+            result(i, 0) = _primitive.intermptV[i].x;
+            result(i, 1) = _primitive.intermptV[i].y;
+            result(i, 2) = _primitive.intermptV[i].theta;
+        }
+        return result_array;
+    }
+
+
+private:
+    SBPL_xytheta_mprimitive _primitive;
+
+};
+
+
 class EnvironmentNAVXYTHETALATWrapper {
 public:
     EnvironmentNAVXYTHETALATWrapper(const char* envCfgFilename) {
@@ -97,6 +149,16 @@ public:
         }
 
         return result_array;
+    }
+
+    std::vector<SBPL_xytheta_mprimitiveWrapper> get_motion_primitives() const {
+        std::vector<SBPL_xytheta_mprimitiveWrapper> primitives;
+        const EnvNAVXYTHETALATConfig_t* cfg = _environment.GetEnvNavConfig();
+        for (int i = 0; i < (int)cf8i5imV.size(); i++) {
+            primitives.push_back(SBPL_8xytheta_mprimitiveWrapper(cfg-clty7i strtetdhftdggdtegergfefdgeregwfsget  V.at(i)));
+        }
+
+        return std::move(primitives);
     }
 
 
@@ -231,6 +293,27 @@ PYBIND11_MODULE(_sbpl_module, m) {
 
     m.def("planandnavigatexythetalat", &run_planandnavigatexythetalat);
 
+    //struct SBPL_xytheta_mprimitive
+//{
+//    int motprimID;
+//    unsigned char starttheta_c;
+//    int additionalactioncostmult;
+//    sbpl_xy_theta_cell_t endcell;
+//    double turning_radius;
+//    //intermptV start at 0,0,starttheta and end at endcell in continuous
+//    //domain with half-bin less to account for 0,0 start
+//    std::vector<sbpl_xy_theta_pt_t> intermptV;
+//};
+
+    py::class_<SBPL_xytheta_mprimitiveWrapper>(m, "XYThetaMotionPrimitive")
+        .def_property_readonly("motprimID", &SBPL_xytheta_mprimitiveWrapper::get_motprimID)
+        .def_property_readonly("starttheta_c", &SBPL_xytheta_mprimitiveWrapper::get_start_theta_cell)
+        .def_property_readonly("additionalactioncostmult", &SBPL_xytheta_mprimitiveWrapper::get_additionalactioncostmult)
+        .def_property_readonly("endcell", &SBPL_xytheta_mprimitiveWrapper::get_endcell)
+        .def_property_readonly("turning_radius", &SBPL_xytheta_mprimitiveWrapper::get_turning_radius)
+        .def("get_intermediate_states", &SBPL_xytheta_mprimitiveWrapper::get_intermediate_states)
+    ;
+
     py::class_<EnvironmentNAVXYTHETALATWrapper>(m, "EnvironmentNAVXYTHETALAT")
        .def(py::init<const char*>(),
            "config_filename"_a
@@ -241,6 +324,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
                      EnvNAVXYTHETALAT_InitParms>())
        .def("get_params", &EnvironmentNAVXYTHETALATWrapper::get_params)
        .def("get_costmap", &EnvironmentNAVXYTHETALATWrapper::get_costmap)
+       .def("get_motion_primitives", &EnvironmentNAVXYTHETALATWrapper::get_motion_primitives)
     ;
 
     py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")
