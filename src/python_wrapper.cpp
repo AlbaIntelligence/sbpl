@@ -215,6 +215,31 @@ public:
         _pPlanner->set_search_mode(searchUntilFirstSolution);
     }
 
+    void apply_environment_changes(const py::safe_array<int>& changedcells_array,
+                                   EnvironmentNAVXYTHETALATWrapper& envWrapper)
+        {
+        // if necessary notify the planner of changes to costmap
+        if (changedcells_array.shape(0)) {
+            auto changedcells = changedcells_array.unchecked<2>();
+            std::vector<nav2dcell_t> changedcellsV;
+            changedcellsV.resize(changedcells_array.shape(0));
+            memcpy(&changedcellsV[0].x, &changedcells(0, 0), sizeof(int)*changedcellsV.size()*2);
+
+            if (dynamic_cast<ARAPlanner*> (_pPlanner) != NULL) {
+                ((ARAPlanner*)_pPlanner)->costs_changed(); //use by ARA* planner (non-incremental)
+            }
+            else if (dynamic_cast<ADPlanner*> (_pPlanner) != NULL) {
+                // get the affected states
+                std::vector<int> preds_of_changededgesIDV;
+                envWrapper.env().GetPredsofChangedEdges(&changedcellsV, &preds_of_changededgesIDV);
+                // let know the incremental planner about them
+                //use by AD* planner (incremental)
+                ((ADPlanner*)_pPlanner)->update_preds_of_changededges(&preds_of_changededgesIDV);
+                printf("%d states were affected\n", (int)preds_of_changededgesIDV.size());
+            }
+        }
+    }
+
 private:
     SBPLPlanner* _pPlanner;
 };
@@ -304,8 +329,7 @@ py::tuple py_navigation_iteration(
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
     SBPLPlannerWrapper& plannerWrapper,
-    const py::safe_array<double>& start_pose_array,
-    const py::safe_array<int>& changedcells_array) {
+    const py::safe_array<double>& start_pose_array) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
     // double allocated_time_secs_foreachplan = 2.; // in seconds
@@ -328,33 +352,8 @@ py::tuple py_navigation_iteration(
     const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat = trueEnvWrapper.env();
     EnvironmentNAVXYTHETALAT& environment_navxythetalat = envWrapper.env();
 
-    auto changedcells = changedcells_array.unchecked<2>();
-    std::vector<nav2dcell_t> changedcellsV;
-    changedcellsV.resize(changedcells_array.shape(0));
-    memcpy(&changedcellsV[0].x, &changedcells(0, 0), sizeof(int)*changedcellsV.size()*2);
-
     double TimeStarted = clock();
     std::vector<int> solution_stateIDs_V;
-
-    // if necessary notify the planner of changes to costmap
-    if (changedcellsV.size()) {
-        if (dynamic_cast<ARAPlanner*> (planner) != NULL) {
-            ((ARAPlanner*)planner)->costs_changed(); //use by ARA* planner (non-incremental)
-        }
-        else if (dynamic_cast<ADPlanner*> (planner) != NULL) {
-            // get the affected states
-            std::vector<int> preds_of_changededgesIDV;
-            environment_navxythetalat.GetPredsofChangedEdges(&changedcellsV, &preds_of_changededgesIDV);
-            // let know the incremental planner about them
-            //use by AD* planner (incremental)
-            ((ADPlanner*)planner)->update_preds_of_changededges(&preds_of_changededgesIDV);
-            printf("%d states were affected\n", (int)preds_of_changededgesIDV.size());
-        }
-    }
-
-    int startx_c = CONTXY2DISC(startx, params.cellsize_m);
-    int starty_c = CONTXY2DISC(starty, params.cellsize_m);
-    int starttheta_c = ContTheta2Disc(starttheta, params.numThetas);
 
     // plan a path
     bool bPlanExists = false;
@@ -386,6 +385,10 @@ py::tuple py_navigation_iteration(
         environment_navxythetalat.GetCoordFromState(
             solution_stateIDs_V[std::min((int)solution_stateIDs_V.size()-1, steps_along_the_path)],
             newx, newy, newtheta);
+
+        int startx_c = CONTXY2DISC(startx, params.cellsize_m);
+        int starty_c = CONTXY2DISC(starty, params.cellsize_m);
+        int starttheta_c = ContTheta2Disc(starttheta, params.numThetas);
 
         printf("moving from %d %d %d to %d %d %d\n", startx_c, starty_c, starttheta_c, newx, newy, newtheta);
 
@@ -438,18 +441,6 @@ PYBIND11_MODULE(_sbpl_module, m) {
 
     m.def("navigation_iteration", &py_navigation_iteration);
 
-    //struct SBPL_xytheta_mprimitive
-//{
-//    int motprimID;
-//    unsigned char starttheta_c;
-//    int additionalactioncostmult;
-//    sbpl_xy_theta_cell_t endcell;
-//    double turning_radius;
-//    //intermptV start at 0,0,starttheta and end at endcell in continuous
-//    //domain with half-bin less to account for 0,0 start
-//    std::vector<sbpl_xy_theta_pt_t> intermptV;
-//};
-
     py::class_<SBPL_xytheta_mprimitiveWrapper>(m, "XYThetaMotionPrimitive")
         .def_property_readonly("motprimID", &SBPL_xytheta_mprimitiveWrapper::get_motprimID)
         .def_property_readonly("starttheta_c", &SBPL_xytheta_mprimitiveWrapper::get_start_theta_cell)
@@ -499,6 +490,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
             "initial_epsilon"_a,
             "search_until_first_solution"_a
         )
+        .def("apply_environment_changes", &SBPLPlannerWrapper::apply_environment_changes)
     ;
 
     py::class_<ARAPlannerWrapper>(m, "ARAPlanner", base_planner)

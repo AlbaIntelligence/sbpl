@@ -106,13 +106,13 @@ if __name__ == '__main__':
            abs(start_pose[2] - params.goaltheta) > goaltol_theta):
 
         changed_cells = incremental_sensing.sense_environment(start_pose, true_env, env)
+        planner.apply_environment_changes(changed_cells, env)
 
         result = _sbpl_module.navigation_iteration(
             true_env,
             env,
             planner,
-            start_pose,
-            changed_cells
+            start_pose
         )
         current_map = env.get_costmap()
         new_start_pose, plan_xytheta, plan_xytheta_cell = result
