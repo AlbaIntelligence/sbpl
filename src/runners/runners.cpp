@@ -102,7 +102,7 @@ void navigationIteration(
     double& startx, double& starty, double& starttheta,
     const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat,
     EnvironmentNAVXYTHETALAT& environment_navxythetalat,
-    vector<sbpl_2Dcell_t>& sensecells,
+    const std::vector<sbpl_2Dcell_t>& sensecells,
     unsigned char* map,
     SBPLPlanner* planner,
     const EnvNAVXYTHETALAT_InitParms& params,

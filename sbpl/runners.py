@@ -76,7 +76,7 @@ if __name__ == '__main__':
     max_motor_primitive_length = np.sqrt(max_mot_prim_length_squared)
     print("Maximum motion primitive length: %s" % max_motor_primitive_length)
 
-    sensing_range = int(max_motor_primitive_length + 0.5)
+    incremental_sensing = _sbpl_module.IncrementalSensing(int(max_motor_primitive_length + 0.5))
 
     planner = create_planner("arastar", env, False)
     planner.set_start_goal_from_env(env)
@@ -98,6 +98,6 @@ if __name__ == '__main__':
         true_env,
         env,
         planner,
-        sensing_range,
+        incremental_sensing,
         current_map
     )

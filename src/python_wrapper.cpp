@@ -239,12 +239,28 @@ typedef SpecificPlannerWrapper<ADPlanner> ADPlannerWrapper;
 typedef SpecificPlannerWrapper<anaPlanner> anaPlannerWrapper;
 
 
+class IncrementalSensingWrapper {
+public:
+    IncrementalSensingWrapper(int sensingRange) {
+        for (int x = -sensingRange; x <= sensingRange; x++) {
+            for (int y = -sensingRange; y <= sensingRange; y++) {
+                _sensecells.push_back(sbpl_2Dcell_t(x, y));
+            }
+        }
+    }
+
+    const std::vector<sbpl_2Dcell_t>& get_sensecells() const {return _sensecells;};
+
+private:
+    std::vector<sbpl_2Dcell_t> _sensecells;
+};
+
 
 int run_planandnavigatexythetalat(
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
     SBPLPlannerWrapper& plannerWrapper,
-    int sensingRange,
+    const IncrementalSensingWrapper& incrementalSensingWrapper,
     py::safe_array<unsigned char>& empty_map) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
@@ -258,13 +274,6 @@ int run_planandnavigatexythetalat(
 
     // create an empty map
     unsigned char* map = &empty_map.mutable_unchecked<2>()(0, 0);
-
-    std::vector<sbpl_2Dcell_t> sensecells;
-    for (int x = -sensingRange; x <= sensingRange; x++) {
-        for (int y = -sensingRange; y <= sensingRange; y++) {
-            sensecells.push_back(sbpl_2Dcell_t(x, y));
-        }
-    }
 
     double startx = params.startx;
     double starty = params.starty;
@@ -281,7 +290,7 @@ int run_planandnavigatexythetalat(
             startx, starty, starttheta,
             trueEnvWrapper.env(),
             envWrapper.env(),
-            sensecells,
+            incrementalSensingWrapper.get_sensecells(),
             map,
             planner,
             params,
@@ -383,4 +392,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())
     ;
 
+    py::class_<IncrementalSensingWrapper>(m, "IncrementalSensing")
+        .def(py::init<int>())
+    ;
 }
