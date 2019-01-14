@@ -261,15 +261,13 @@ py::tuple py_navigation_iteration(
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
     SBPLPlannerWrapper& plannerWrapper,
     const py::safe_array<double>& start_pose_array,
-    const IncrementalSensingWrapper& incrementalSensingWrapper,
-    py::safe_array<unsigned char>& empty_map) {
+    const IncrementalSensingWrapper& incrementalSensingWrapper) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
+    // double allocated_time_secs_foreachplan = 2.; // in seconds
 
     // environment parameters
     EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
-
-    unsigned char* map = &empty_map.mutable_unchecked<2>()(0, 0);
 
     auto start_pose = start_pose_array.unchecked<1>();
 
@@ -308,10 +306,9 @@ py::tuple py_navigation_iteration(
         int index = x + y * params.size_x;
         unsigned char truecost = trueenvironment_navxythetalat.GetMapCost(x, y);
         // update the cell if we haven't seen it before
-        if (map[index] != truecost) {
-            map[index] = truecost;
-            environment_navxythetalat.UpdateCost(x, y, map[index]);
-            printf("setting cost[%d][%d] to %d\n", x, y, map[index]);
+        if (environment_navxythetalat.GetMapCost(x, y) != truecost) {
+            environment_navxythetalat.UpdateCost(x, y, truecost);
+            printf("setting cost[%d][%d] to %d\n", x, y, truecost);
             bChanges = true;
             // store the changed cells
             nav2dcell_t nav2dcell;
@@ -397,13 +394,16 @@ py::tuple py_navigation_iteration(
 //            printf("\n");
 //        }
 
+    int steps_along_the_path = 100;
     // move along the path
     if (bPlanExists && (int)xythetaPath.size() > 1) {
         //get coord of the successor
         int newx, newy, newtheta;
 
         // move until we move into the end of motion primitive
-        environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[1], newx, newy, newtheta);
+        environment_navxythetalat.GetCoordFromState(
+            solution_stateIDs_V[std::min((int)solution_stateIDs_V.size()-1, steps_along_the_path)],
+            newx, newy, newtheta);
 
         printf("moving from %d %d %d to %d %d %d\n", startx_c, starty_c, starttheta_c, newx, newy, newtheta);
 
