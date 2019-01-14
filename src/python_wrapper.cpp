@@ -249,7 +249,51 @@ public:
         }
     }
 
-    const std::vector<sbpl_2Dcell_t>& get_sensecells() const {return _sensecells;};
+    py::safe_array<int> sense_environment(
+        const py::safe_array<double>&  start_pose_array,
+        const EnvironmentNAVXYTHETALATWrapper& true_environment_wrapper,
+        EnvironmentNAVXYTHETALATWrapper& environment_to_update_wrapper) const {
+
+        auto start_pose = start_pose_array.unchecked<1>();
+
+        double startx = start_pose(0);
+        double starty = start_pose(1);
+        double starttheta = start_pose(2);
+
+        const EnvironmentNAVXYTHETALAT& true_environment = true_environment_wrapper.env();
+        EnvironmentNAVXYTHETALAT& environment_to_update = environment_to_update_wrapper.env();
+        auto params = true_environment_wrapper.get_params();
+
+        std::vector<nav2dcell_t> changedcellsV;
+        // simulate sensing the cells
+        for (int i = 0; i < (int)_sensecells.size(); i++) {
+            int x = CONTXY2DISC(startx, params.cellsize_m) + _sensecells.at(i).x;
+            int y = CONTXY2DISC(starty, params.cellsize_m) + _sensecells.at(i).y;
+
+            // ignore if outside the map
+            if (x < 0 || x >= params.size_x || y < 0 || y >= params.size_y) {
+                continue;
+            }
+
+            int index = x + y * params.size_x;
+            unsigned char truecost = true_environment.GetMapCost(x, y);
+            // update the cell if we haven't seen it before
+            if (environment_to_update.GetMapCost(x, y) != truecost) {
+                environment_to_update.UpdateCost(x, y, truecost);
+                // store the changed cells
+                nav2dcell_t nav2dcell;
+                nav2dcell.x = x;
+                nav2dcell.y = y;
+                changedcellsV.push_back(nav2dcell);
+            }
+        }
+
+        py::safe_array<int> changed_cells_array({(int)changedcellsV.size(), 2});
+        int* p_changed_cells = &changed_cells_array.mutable_unchecked()(0, 0);
+        memcpy(p_changed_cells, &changedcellsV[0].x, sizeof(int)*changedcellsV.size()*2);
+
+        return changed_cells_array;
+    }
 
 private:
     std::vector<sbpl_2Dcell_t> _sensecells;
@@ -261,7 +305,7 @@ py::tuple py_navigation_iteration(
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
     SBPLPlannerWrapper& plannerWrapper,
     const py::safe_array<double>& start_pose_array,
-    const IncrementalSensingWrapper& incrementalSensingWrapper) {
+    const py::safe_array<int>& changedcells_array) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
     // double allocated_time_secs_foreachplan = 2.; // in seconds
@@ -281,52 +325,25 @@ py::tuple py_navigation_iteration(
     std::vector<sbpl_xy_theta_pt_t> xythetaPath;
     std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
 
-    auto sensecells = incrementalSensingWrapper.get_sensecells();
     const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat = trueEnvWrapper.env();
     EnvironmentNAVXYTHETALAT& environment_navxythetalat = envWrapper.env();
 
-    std::vector<int> preds_of_changededgesIDV;
+    auto changedcells = changedcells_array.unchecked<2>();
     std::vector<nav2dcell_t> changedcellsV;
-    std::vector<int> solution_stateIDs_V;
-
-    //simulate sensor data update
-    bool bChanges = false;
-    bool bPrint = false;
-
-    // simulate sensing the cells
-    for (int i = 0; i < (int)sensecells.size(); i++) {
-        int x = CONTXY2DISC(startx, params.cellsize_m) + sensecells.at(i).x;
-        int y = CONTXY2DISC(starty, params.cellsize_m) + sensecells.at(i).y;
-
-        // ignore if outside the map
-        if (x < 0 || x >= params.size_x || y < 0 || y >= params.size_y) {
-            continue;
-        }
-
-        int index = x + y * params.size_x;
-        unsigned char truecost = trueenvironment_navxythetalat.GetMapCost(x, y);
-        // update the cell if we haven't seen it before
-        if (environment_navxythetalat.GetMapCost(x, y) != truecost) {
-            environment_navxythetalat.UpdateCost(x, y, truecost);
-            printf("setting cost[%d][%d] to %d\n", x, y, truecost);
-            bChanges = true;
-            // store the changed cells
-            nav2dcell_t nav2dcell;
-            nav2dcell.x = x;
-            nav2dcell.y = y;
-            changedcellsV.push_back(nav2dcell);
-        }
-    }
+    changedcellsV.resize(changedcells_array.shape(0));
+    memcpy(&changedcellsV[0].x, &changedcells(0, 0), sizeof(int)*changedcellsV.size()*2);
 
     double TimeStarted = clock();
+    std::vector<int> solution_stateIDs_V;
 
     // if necessary notify the planner of changes to costmap
-    if (bChanges) {
+    if (changedcellsV.size()) {
         if (dynamic_cast<ARAPlanner*> (planner) != NULL) {
             ((ARAPlanner*)planner)->costs_changed(); //use by ARA* planner (non-incremental)
         }
         else if (dynamic_cast<ADPlanner*> (planner) != NULL) {
             // get the affected states
+            std::vector<int> preds_of_changededgesIDV;
             environment_navxythetalat.GetPredsofChangedEdges(&changedcellsV, &preds_of_changededgesIDV);
             // let know the incremental planner about them
             //use by AD* planner (incremental)
@@ -358,43 +375,8 @@ py::tuple py_navigation_iteration(
         environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], xytheta_cell.x, xytheta_cell.y, xytheta_cell.theta);
         xythetaCellPath.push_back(xytheta_cell);
     }
-    // print the map (robot's view of the world and current plan)
-//        int startindex = startx_c + starty_c * size_x;
-//        int goalindex = goalx_c + goaly_c * size_x;
-//        for (int y = 0; bPrintMap && y < size_y; y++) {
-//            for (int x = 0; x < size_x; x++) {
-//                int index = x + y * size_x;
-//                int cost = map[index];
-//                cost = environment_navxythetalat.GetMapCost(x, y);
-//
-//                // check to see if it is on the path
-//                bool bOnthePath = false;
-//                for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
-//                    int newx, newy, newtheta = 0;
-//                    environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], newx, newy, newtheta);
-//                    if (x == newx && y == newy) bOnthePath = true;
-//                }
-//
-//                if (index != startindex && index != goalindex && !bOnthePath) {
-//                    printf("%3d ", cost);
-//                }
-//                else if (index == startindex) {
-//                    printf("  X ");
-//                }
-//                else if (index == goalindex) {
-//                    printf("  G ");
-//                }
-//                else if (bOnthePath) {
-//                    printf("  * ");
-//                }
-//                else {
-//                    printf("? ");
-//                }
-//            }
-//            printf("\n");
-//        }
 
-    int steps_along_the_path = 100;
+    int steps_along_the_path = 20;
     // move along the path
     if (bPlanExists && (int)xythetaPath.size() > 1) {
         //get coord of the successor
@@ -429,17 +411,21 @@ py::tuple py_navigation_iteration(
         printf("No move is made\n");
     }
 
-    if (bPrint) {
-        printf("System Pause (return=%d)\n", system("pause"));
-    }
-
     py::safe_array<double> new_start_pose_array({3});
     auto new_start_pose = new_start_pose_array.mutable_unchecked();
     new_start_pose(0) = startx;
     new_start_pose(1) = starty;
     new_start_pose(2) = starttheta;
 
-    return py::make_tuple(new_start_pose_array);
+    py::safe_array<double> xytheta_path_array({(int)xythetaPath.size(), 3});
+    double* p_xytheta_path = &xytheta_path_array.mutable_unchecked()(0, 0);
+    memcpy(p_xytheta_path, &xythetaPath[0], sizeof(double)*xythetaPath.size()*3);
+
+    py::safe_array<int> xytheta_cell_path_array({(int)xythetaCellPath.size(), 3});
+    int* p_xytheta_cell_path = &xytheta_cell_path_array.mutable_unchecked()(0, 0);
+    memcpy(p_xytheta_cell_path, &xythetaCellPath[0], sizeof(int)*xythetaCellPath.size()*3);
+
+    return py::make_tuple(new_start_pose_array, xytheta_path_array, xytheta_cell_path_array);
 }
 
 /**
@@ -529,5 +515,6 @@ PYBIND11_MODULE(_sbpl_module, m) {
 
     py::class_<IncrementalSensingWrapper>(m, "IncrementalSensing")
         .def(py::init<int>())
+        .def("sense_environment", &IncrementalSensingWrapper::sense_environment)
     ;
 }

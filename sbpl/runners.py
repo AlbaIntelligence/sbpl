@@ -79,8 +79,8 @@ if __name__ == '__main__':
 
     incremental_sensing = _sbpl_module.IncrementalSensing(10*int(max_motor_primitive_length + 0.5))
 
-    planner = create_planner("arastar", env, False)
-    # planner = create_planner("adstar", env, False)
+    # planner = create_planner("arastar", env, False)
+    planner = create_planner("adstar", env, False)
     # planner = create_planner("anastar", env, False)
 
     planner.set_start_goal_from_env(env)
@@ -104,19 +104,28 @@ if __name__ == '__main__':
     while (abs(start_pose[0] - params.goalx) > goaltol_x or
            abs(start_pose[1] - params.goaly) > goaltol_y or
            abs(start_pose[2] - params.goaltheta) > goaltol_theta):
+
+        changed_cells = incremental_sensing.sense_environment(start_pose, true_env, env)
+
         result = _sbpl_module.navigation_iteration(
             true_env,
             env,
             planner,
             start_pose,
-            incremental_sensing,
+            changed_cells
         )
         current_map = env.get_costmap()
-        start_pose = result[0]
-        print(start_pose, goal_pose)
-        plt.imshow(current_map, vmin=0, vmax=254)
+        new_start_pose, plan_xytheta, plan_xytheta_cell = result
+
+        plt.imshow(current_map, vmin=0, vmax=np.amax(current_map))
         plt.ylim([0, current_map.shape[0]])
         plt.xlim([0, current_map.shape[1]])
+        plt.plot(int(start_pose[0]/params.cellsize_m), int(start_pose[1]/params.cellsize_m), 'r*')
+        plt.plot(int(new_start_pose[0] / params.cellsize_m), int(new_start_pose[1] / params.cellsize_m), 'g*')
+        plt.plot(plan_xytheta_cell[:, 0], plan_xytheta_cell[:, 1], 'y-')
         plt.show()
+
+        start_pose = new_start_pose
+        print(start_pose, goal_pose)
 
     print('Goal reached')
