@@ -176,6 +176,26 @@ public:
         return result_array;
     }
 
+    py::safe_array<double> xytheta_cell_to_real(const py::safe_array<int>& cell_array) const {
+
+        py::safe_array<double> result_array({3});
+        auto result = result_array.mutable_unchecked();
+
+        auto cell = cell_array.unchecked<1>();
+
+        auto params = this->get_params();
+        result(0) = DISCXY2CONT(cell(0), params.cellsize_m);
+        result(1) = DISCXY2CONT(cell(1), params.cellsize_m);
+        result(2) = DiscTheta2Cont(cell(2), params.numThetas);
+
+        return result_array;
+    }
+
+    bool is_valid_configuration(const py::safe_array<int>& cell_array) const {
+        auto cell = cell_array.unchecked<1>();
+        return _environment.IsValidConfiguration(cell(0), cell(1), cell(2));
+    }
+
 
 private:
     EnvironmentNAVXYTHETALAT _environment;
@@ -275,6 +295,18 @@ public:
         return py::make_tuple(xytheta_path_array, xytheta_cell_path_array, plan_time, solution_epsilon);
     }
 
+    void set_start(const py::safe_array<double> start_pose_array, EnvironmentNAVXYTHETALATWrapper& envWrapper) {
+
+        auto start_pose = start_pose_array.unchecked<1>();
+        // update the environment
+        int newstartstateID = envWrapper.env().SetStart(start_pose(0), start_pose(1), start_pose(2));
+
+        // update the planner
+        if (_pPlanner->set_start(newstartstateID) == 0) {
+            throw SBPL_Exception("ERROR: failed to update robot pose in the planner");
+        }
+    }
+
 private:
     SBPLPlanner* _pPlanner;
 };
@@ -360,77 +392,6 @@ private:
 };
 
 
-py::tuple py_navigation_iteration(
-    const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
-    EnvironmentNAVXYTHETALATWrapper& envWrapper,
-    SBPLPlannerWrapper& plannerWrapper,
-    const py::safe_array<double>& start_pose_array,
-    const py::safe_array<int>& xytheta_cell_path_array
-    ) {
-
-    // environment parameters
-    EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
-
-    auto start_pose = start_pose_array.unchecked<1>();
-
-    double startx = start_pose(0);
-    double starty = start_pose(1);
-    double starttheta = start_pose(2);
-
-    SBPLPlanner* planner = plannerWrapper.planner();
-
-    std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
-    xythetaCellPath.resize(xytheta_cell_path_array.shape(0));
-    const int* p_cell_path_array = &xytheta_cell_path_array.unchecked<2>()(0, 0);
-    memcpy(&xythetaCellPath[0].x, p_cell_path_array, sizeof(int)*xytheta_cell_path_array.shape(0)*3);
-
-    const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat = trueEnvWrapper.env();
-    EnvironmentNAVXYTHETALAT& environment_navxythetalat = envWrapper.env();
-
-    // move along the path
-    if (xythetaCellPath.size() > 0) {
-    
-        int steps_along_the_path = 20;
-        // move until we move into the end of motion primitive
-        sbpl_xy_theta_cell_t cellToMove = xythetaCellPath[std::min((int)xythetaCellPath.size()-1, steps_along_the_path)];
-
-        int startx_c = CONTXY2DISC(startx, params.cellsize_m);
-        int starty_c = CONTXY2DISC(starty, params.cellsize_m);
-        int starttheta_c = ContTheta2Disc(starttheta, params.numThetas);
-
-        printf("moving from %d %d %d to %d %d %d\n", startx_c, starty_c, starttheta_c, cellToMove.x, cellToMove.y, cellToMove.theta);
-
-        // this check is weak since true configuration does not know the actual perimeter of the robot
-        if (!trueenvironment_navxythetalat.IsValidConfiguration(cellToMove.x, cellToMove.y, cellToMove.theta)) {
-            throw SBPL_Exception("ERROR: robot is commanded to move into an invalid configuration according to true environment");
-        }
-
-        // move
-        startx = DISCXY2CONT(cellToMove.x, params.cellsize_m);
-        starty = DISCXY2CONT(cellToMove.y, params.cellsize_m);
-        starttheta = DiscTheta2Cont(cellToMove.theta, params.numThetas);
-
-        // update the environment
-        int newstartstateID = environment_navxythetalat.SetStart(startx, starty, starttheta);
-
-        // update the planner
-        if (planner->set_start(newstartstateID) == 0) {
-            throw SBPL_Exception("ERROR: failed to update robot pose in the planner");
-        }
-    }
-    else {
-        printf("No move is made\n");
-    }
-
-    py::safe_array<double> new_start_pose_array({3});
-    auto new_start_pose = new_start_pose_array.mutable_unchecked();
-    new_start_pose(0) = startx;
-    new_start_pose(1) = starty;
-    new_start_pose(2) = starttheta;
-
-    return py::make_tuple(new_start_pose_array);
-}
-
 /**
  * @brief pybind module
  * @details pybind module for all planners, systems and interfaces
@@ -438,8 +399,6 @@ py::tuple py_navigation_iteration(
  */
 PYBIND11_MODULE(_sbpl_module, m) {
     m.doc() = "Python wrapper for SBPL planners";
-
-    m.def("navigation_iteration", &py_navigation_iteration);
 
     py::class_<SBPL_xytheta_mprimitiveWrapper>(m, "XYThetaMotionPrimitive")
         .def_property_readonly("motprimID", &SBPL_xytheta_mprimitiveWrapper::get_motprimID)
@@ -462,6 +421,8 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def("get_costmap", &EnvironmentNAVXYTHETALATWrapper::get_costmap)
        .def("get_motion_primitives", &EnvironmentNAVXYTHETALATWrapper::get_motion_primitives)
        .def("xytheta_real_to_cell", &EnvironmentNAVXYTHETALATWrapper::xytheta_real_to_cell)
+       .def("xytheta_cell_to_real", &EnvironmentNAVXYTHETALATWrapper::xytheta_cell_to_real)
+       .def("is_valid_configuration", &EnvironmentNAVXYTHETALATWrapper::is_valid_configuration)
     ;
 
     py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")
@@ -495,6 +456,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
             "environment"_a,
             "allocated_time"_a
         )
+        .def("set_start", &SBPLPlannerWrapper::set_start)
     ;
 
     py::class_<ARAPlannerWrapper>(m, "ARAPlanner", base_planner)

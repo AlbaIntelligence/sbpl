@@ -96,6 +96,7 @@ if __name__ == '__main__':
     goaltol_x = 0.001
     goaltol_y = 0.001
     goaltol_theta = 0.001
+    steps_along_the_path = 20
 
     start_pose = np.array((params.startx, params.starty, params.starttheta))
     goal_pose = np.array((params.goalx, params.goaly, params.goaltheta))
@@ -110,15 +111,22 @@ if __name__ == '__main__':
 
         plan_xytheta, plan_xytheta_cell, plan_time, solution_eps = planner.replan(env, allocated_time=10.)
 
-        result = _sbpl_module.navigation_iteration(
-            true_env,
-            env,
-            planner,
-            start_pose,
-            plan_xytheta_cell
-        )
+        if len(plan_xytheta_cell):
+            # move until we move into the end of motion primitive
+            cell_to_move = plan_xytheta_cell[min(len(plan_xytheta_cell) - 1, steps_along_the_path)]
+            print("Moving %s -> %s" % (env.xytheta_real_to_cell(start_pose), cell_to_move))
+            # this check is weak since true configuration does not know the actual perimeter of the robot
+            if not true_env.is_valid_configuration(cell_to_move):
+                raise Exception("ERROR: robot is commanded to move into an invalid configuration according to true environment")
+
+            new_start_pose = env.xytheta_cell_to_real(cell_to_move)
+            planner.set_start(new_start_pose, env)
+
+        else:
+            new_start_pose = start_pose
+            print("No move is made")
+
         current_map = env.get_costmap()
-        new_start_pose, = result
 
         plt.imshow(current_map, vmin=0, vmax=np.amax(current_map))
         plt.ylim([0, current_map.shape[0]])
@@ -129,6 +137,5 @@ if __name__ == '__main__':
         plt.show()
 
         start_pose = new_start_pose
-        print(start_pose, goal_pose)
 
     print('Goal reached')
