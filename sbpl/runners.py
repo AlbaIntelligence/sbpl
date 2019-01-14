@@ -108,14 +108,17 @@ if __name__ == '__main__':
         changed_cells = incremental_sensing.sense_environment(start_pose, true_env, env)
         planner.apply_environment_changes(changed_cells, env)
 
+        plan_xytheta, plan_xytheta_cell, plan_time, solution_eps = planner.replan(env, allocated_time=10.)
+
         result = _sbpl_module.navigation_iteration(
             true_env,
             env,
             planner,
-            start_pose
+            start_pose,
+            plan_xytheta_cell
         )
         current_map = env.get_costmap()
-        new_start_pose, plan_xytheta, plan_xytheta_cell = result
+        new_start_pose, = result
 
         plt.imshow(current_map, vmin=0, vmax=np.amax(current_map))
         plt.ylim([0, current_map.shape[0]])

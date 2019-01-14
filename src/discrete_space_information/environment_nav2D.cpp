@@ -1125,7 +1125,7 @@ void EnvironmentNAV2D::PrintEnv_Config(FILE* fOut)
     throw SBPL_Exception("ERROR in EnvNAV2D... function: PrintEnv_Config is undefined");
 }
 
-void EnvironmentNAV2D::PrintTimeStat(FILE* fOut)
+void EnvironmentNAV2D::PrintTimeStat(FILE* fOut) const
 {
 #if TIME_DEBUG
     SBPL_FPRINTF(fOut,

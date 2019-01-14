@@ -240,6 +240,41 @@ public:
         }
     }
 
+    py::tuple replan(EnvironmentNAVXYTHETALATWrapper& envWrapper, double allocated_time_secs_foreachplan) {
+        double plan_time, solution_epsilon;
+        std::vector<sbpl_xy_theta_pt_t> xythetaPath;
+        std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
+
+        printf("new planning...\n");
+        double TimeStarted = clock();
+        std::vector<int> solution_stateIDs_V;
+
+        bool bPlanExists = (_pPlanner->replan(allocated_time_secs_foreachplan, &solution_stateIDs_V) == 1);
+        printf("done with the solution of size=%d and sol. eps=%f\n", (unsigned int)solution_stateIDs_V.size(),
+               _pPlanner->get_solution_eps());
+
+        plan_time = (clock() - TimeStarted) / ((double)CLOCKS_PER_SEC);
+        solution_epsilon = _pPlanner->get_solution_eps();
+
+        envWrapper.env().ConvertStateIDPathintoXYThetaPath(&solution_stateIDs_V, &xythetaPath);
+        printf("actual path (with intermediate poses) size=%d\n", (unsigned int)xythetaPath.size());
+        for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
+            sbpl_xy_theta_cell_t xytheta_cell;
+            envWrapper.env().GetCoordFromState(solution_stateIDs_V[j], xytheta_cell.x, xytheta_cell.y, xytheta_cell.theta);
+            xythetaCellPath.push_back(xytheta_cell);
+        }
+
+        py::safe_array<double> xytheta_path_array({(int)xythetaPath.size(), 3});
+        double* p_xytheta_path = &xytheta_path_array.mutable_unchecked()(0, 0);
+        memcpy(p_xytheta_path, &xythetaPath[0], sizeof(double)*xythetaPath.size()*3);
+
+        py::safe_array<int> xytheta_cell_path_array({(int)xythetaCellPath.size(), 3});
+        int* p_xytheta_cell_path = &xytheta_cell_path_array.mutable_unchecked()(0, 0);
+        memcpy(p_xytheta_cell_path, &xythetaCellPath[0], sizeof(int)*xythetaCellPath.size()*3);
+
+        return py::make_tuple(xytheta_path_array, xytheta_cell_path_array, plan_time, solution_epsilon);
+    }
+
 private:
     SBPLPlanner* _pPlanner;
 };
@@ -329,10 +364,9 @@ py::tuple py_navigation_iteration(
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
     SBPLPlannerWrapper& plannerWrapper,
-    const py::safe_array<double>& start_pose_array) {
-
-    double allocated_time_secs_foreachplan = 10.0; // in seconds
-    // double allocated_time_secs_foreachplan = 2.; // in seconds
+    const py::safe_array<double>& start_pose_array,
+    const py::safe_array<int>& xytheta_cell_path_array
+    ) {
 
     // environment parameters
     EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
@@ -345,62 +379,36 @@ py::tuple py_navigation_iteration(
 
     SBPLPlanner* planner = plannerWrapper.planner();
 
-    double plan_time, solution_epsilon;
-    std::vector<sbpl_xy_theta_pt_t> xythetaPath;
     std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
+    xythetaCellPath.resize(xytheta_cell_path_array.shape(0));
+    const int* p_cell_path_array = &xytheta_cell_path_array.unchecked<2>()(0, 0);
+    memcpy(&xythetaCellPath[0].x, p_cell_path_array, sizeof(int)*xytheta_cell_path_array.shape(0)*3);
 
     const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat = trueEnvWrapper.env();
     EnvironmentNAVXYTHETALAT& environment_navxythetalat = envWrapper.env();
 
-    double TimeStarted = clock();
-    std::vector<int> solution_stateIDs_V;
-
-    // plan a path
-    bool bPlanExists = false;
-
-    printf("new planning...\n");
-    bPlanExists = (planner->replan(allocated_time_secs_foreachplan, &solution_stateIDs_V) == 1);
-    printf("done with the solution of size=%d and sol. eps=%f\n", (unsigned int)solution_stateIDs_V.size(),
-           planner->get_solution_eps());
-    environment_navxythetalat.PrintTimeStat(stdout);
-
-    plan_time = (clock() - TimeStarted) / ((double)CLOCKS_PER_SEC);
-    solution_epsilon = planner->get_solution_eps();
-
-    environment_navxythetalat.ConvertStateIDPathintoXYThetaPath(&solution_stateIDs_V, &xythetaPath);
-    printf("actual path (with intermediate poses) size=%d\n", (unsigned int)xythetaPath.size());
-    for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
-        sbpl_xy_theta_cell_t xytheta_cell;
-        environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], xytheta_cell.x, xytheta_cell.y, xytheta_cell.theta);
-        xythetaCellPath.push_back(xytheta_cell);
-    }
-
-    int steps_along_the_path = 20;
     // move along the path
-    if (bPlanExists && (int)xythetaPath.size() > 1) {
-        //get coord of the successor
-        int newx, newy, newtheta;
-
+    if (xythetaCellPath.size() > 0) {
+    
+        int steps_along_the_path = 20;
         // move until we move into the end of motion primitive
-        environment_navxythetalat.GetCoordFromState(
-            solution_stateIDs_V[std::min((int)solution_stateIDs_V.size()-1, steps_along_the_path)],
-            newx, newy, newtheta);
+        sbpl_xy_theta_cell_t cellToMove = xythetaCellPath[std::min((int)xythetaCellPath.size()-1, steps_along_the_path)];
 
         int startx_c = CONTXY2DISC(startx, params.cellsize_m);
         int starty_c = CONTXY2DISC(starty, params.cellsize_m);
         int starttheta_c = ContTheta2Disc(starttheta, params.numThetas);
 
-        printf("moving from %d %d %d to %d %d %d\n", startx_c, starty_c, starttheta_c, newx, newy, newtheta);
+        printf("moving from %d %d %d to %d %d %d\n", startx_c, starty_c, starttheta_c, cellToMove.x, cellToMove.y, cellToMove.theta);
 
         // this check is weak since true configuration does not know the actual perimeter of the robot
-        if (!trueenvironment_navxythetalat.IsValidConfiguration(newx, newy, newtheta)) {
+        if (!trueenvironment_navxythetalat.IsValidConfiguration(cellToMove.x, cellToMove.y, cellToMove.theta)) {
             throw SBPL_Exception("ERROR: robot is commanded to move into an invalid configuration according to true environment");
         }
 
         // move
-        startx = DISCXY2CONT(newx, params.cellsize_m);
-        starty = DISCXY2CONT(newy, params.cellsize_m);
-        starttheta = DiscTheta2Cont(newtheta, params.numThetas);
+        startx = DISCXY2CONT(cellToMove.x, params.cellsize_m);
+        starty = DISCXY2CONT(cellToMove.y, params.cellsize_m);
+        starttheta = DiscTheta2Cont(cellToMove.theta, params.numThetas);
 
         // update the environment
         int newstartstateID = environment_navxythetalat.SetStart(startx, starty, starttheta);
@@ -420,15 +428,7 @@ py::tuple py_navigation_iteration(
     new_start_pose(1) = starty;
     new_start_pose(2) = starttheta;
 
-    py::safe_array<double> xytheta_path_array({(int)xythetaPath.size(), 3});
-    double* p_xytheta_path = &xytheta_path_array.mutable_unchecked()(0, 0);
-    memcpy(p_xytheta_path, &xythetaPath[0], sizeof(double)*xythetaPath.size()*3);
-
-    py::safe_array<int> xytheta_cell_path_array({(int)xythetaCellPath.size(), 3});
-    int* p_xytheta_cell_path = &xytheta_cell_path_array.mutable_unchecked()(0, 0);
-    memcpy(p_xytheta_cell_path, &xythetaCellPath[0], sizeof(int)*xythetaCellPath.size()*3);
-
-    return py::make_tuple(new_start_pose_array, xytheta_path_array, xytheta_cell_path_array);
+    return py::make_tuple(new_start_pose_array);
 }
 
 /**
@@ -491,6 +491,10 @@ PYBIND11_MODULE(_sbpl_module, m) {
             "search_until_first_solution"_a
         )
         .def("apply_environment_changes", &SBPLPlannerWrapper::apply_environment_changes)
+        .def("replan", &SBPLPlannerWrapper::replan,
+            "environment"_a,
+            "allocated_time"_a
+        )
     ;
 
     py::class_<ARAPlannerWrapper>(m, "ARAPlanner", base_planner)

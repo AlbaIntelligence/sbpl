@@ -354,7 +354,7 @@ public:
     /**
      * \brief print some time statistics
      */
-    virtual void PrintTimeStat(FILE* fOut);
+    virtual void PrintTimeStat(FILE* fOut) const;
 
     /**
      * \brief checks X,Y against map boundaries

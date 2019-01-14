@@ -2176,7 +2176,7 @@ void EnvironmentNAVXYTHETALATTICE::Set2DBucketSize(int BucketSize)
     bucketsize = BucketSize;
 }
 
-void EnvironmentNAVXYTHETALATTICE::PrintTimeStat(FILE* fOut)
+void EnvironmentNAVXYTHETALATTICE::PrintTimeStat(FILE* fOut) const
 {
 #if TIME_DEBUG
     SBPL_FPRINTF(fOut, "time3_addallout = %f secs, time_gethash = %f secs, time_createhash = %f secs, "

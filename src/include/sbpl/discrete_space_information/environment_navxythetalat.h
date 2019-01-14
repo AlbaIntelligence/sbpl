@@ -420,7 +420,7 @@ public:
     /**
      * \brief prints time statistics
      */
-    virtual void PrintTimeStat(FILE* fOut);
+    virtual void PrintTimeStat(FILE* fOut) const;
 
     /**
      * \brief returns the cost corresponding to the cell <x,y>
