@@ -430,6 +430,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
     ;
 
     py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")
+        .def(py::init<>())
         .def_readwrite("size_x", &EnvNAVXYTHETALAT_InitParms::size_x)
         .def_readwrite("size_y", &EnvNAVXYTHETALAT_InitParms::size_y)
         .def_readwrite("numThetas", &EnvNAVXYTHETALAT_InitParms::numThetas)

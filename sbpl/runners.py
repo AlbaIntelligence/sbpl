@@ -7,16 +7,12 @@ import os
 import numpy as np
 import cv2
 
+from sbpl.motion_primitives import mprim_folder
 from sbpl.planners import create_planner
 from sbpl.utilities.costmap_2d_python import CostMap2D
 
 from sbpl.utilities.map_drawing_utils import prepare_canvas, draw_robot, draw_trajectory
 from sbpl.utilities.map_drawing_utils import draw_world_map
-
-
-def mprim_folder():
-    current_dir = os.path.dirname(__file__)
-    return os.path.abspath(os.path.join(current_dir, '../matlab/mprim'))
 
 
 def env_examples_folder():
