@@ -196,6 +196,13 @@ public:
         return _environment.IsValidConfiguration(cell(0), cell(1), cell(2));
     }
 
+    py::tuple get_cost_thresholds() const {
+
+        const EnvNAVXYTHETALATConfig_t* pConfig = _environment.GetEnvNavConfig();
+
+        return py::make_tuple(pConfig->obsthresh, pConfig->cost_inscribed_thresh, pConfig->cost_possibly_circumscribed_thresh);
+    }
+
 
 private:
     EnvironmentNAVXYTHETALAT _environment;
@@ -265,19 +272,15 @@ public:
         std::vector<sbpl_xy_theta_pt_t> xythetaPath;
         std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
 
-        printf("new planning...\n");
         double TimeStarted = clock();
         std::vector<int> solution_stateIDs_V;
 
         bool bPlanExists = (_pPlanner->replan(allocated_time_secs_foreachplan, &solution_stateIDs_V) == 1);
-        printf("done with the solution of size=%d and sol. eps=%f\n", (unsigned int)solution_stateIDs_V.size(),
-               _pPlanner->get_solution_eps());
 
         plan_time = (clock() - TimeStarted) / ((double)CLOCKS_PER_SEC);
         solution_epsilon = _pPlanner->get_solution_eps();
 
         envWrapper.env().ConvertStateIDPathintoXYThetaPath(&solution_stateIDs_V, &xythetaPath);
-        printf("actual path (with intermediate poses) size=%d\n", (unsigned int)xythetaPath.size());
         for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
             sbpl_xy_theta_cell_t xytheta_cell;
             envWrapper.env().GetCoordFromState(solution_stateIDs_V[j], xytheta_cell.x, xytheta_cell.y, xytheta_cell.theta);
@@ -423,6 +426,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def("xytheta_real_to_cell", &EnvironmentNAVXYTHETALATWrapper::xytheta_real_to_cell)
        .def("xytheta_cell_to_real", &EnvironmentNAVXYTHETALATWrapper::xytheta_cell_to_real)
        .def("is_valid_configuration", &EnvironmentNAVXYTHETALATWrapper::is_valid_configuration)
+       .def("get_cost_thresholds", &EnvironmentNAVXYTHETALATWrapper::get_cost_thresholds)
     ;
 
     py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")

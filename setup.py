@@ -11,19 +11,19 @@ os.environ['OPT'] = " ".join(
     flag for flag in opt.split() if flag != '-Wstrict-prototypes'
 )
 
-exec(open('sparse_rrt/_version.py').read())
+exec(open('sbpl/_version.py').read())
 
 setup(
     name='sbpl',
     version=__version__,
-    description='Sparse stable trees planner',
+    description='Python bindings for SBPL',
     long_description=long_description,
     author='Oleg Sinyavskiy',
     author_email='olegsinyavskiy@gmail.com',
-    url='https://github.com/olegsinyavskiy/sparse_rrt',
+    url='https://github.com/olegsinyavskiy/sbpl',
     download_url='',
     license='BSD License 2.0',
-    install_requires=['numpy>=1.13.3'],
+    install_requires=['numpy>=1.11.0'],
     package_data={'': ['input']},
     include_package_data=True,
     extras_require={
@@ -47,26 +47,31 @@ setup(
     ],
     packages=find_packages(),
     ext_modules=[Extension(
-        'sparse_rrt._sst_module',
+        'sbpl._sbpl_module',
         extra_compile_args=['-std=c++1y', '-O3'],
-        include_dirs=['deps/pybind11/include',
-                      'include'],
+        include_dirs=['dep/pybind11/include',
+                      'src/include'],
         sources=[
-            'src/motion_planners/planner.cpp',
-            'src/motion_planners/rrt.cpp',
-            'src/motion_planners/sst.cpp',
-            'src/nearest_neighbors/graph_nearest_neighbors.cpp',
-            'src/systems/car.cpp',
-            'src/systems/cart_pole.cpp',
-            'src/systems/pendulum.cpp',
-            'src/systems/point.cpp',
-            'src/systems/rally_car.cpp',
-            'src/systems/two_link_acrobot.cpp',
-            'src/utilities/random.cpp',
-            'src/utilities/timer.cpp',
-            'src/image_creation/svg_image.cpp',
-            'src/image_creation/planner_visualization.cpp',
-            'src/systems/distance_functions.cpp',
+            'src/discrete_space_information/environment_nav2D.cpp',
+            'src/discrete_space_information/environment_navxythetalat.cpp',
+            'src/discrete_space_information/environment_navxythetamlevlat.cpp',
+            'src/discrete_space_information/environment_nav2Duu.cpp',
+            'src/discrete_space_information/environment_XXX.cpp',
+            'src/discrete_space_information/environment_robarm.cpp',
+            'src/heuristics/embedded_heuristic.cpp',
+            'src/planners/adplanner.cpp',
+            'src/planners/ANAplanner.cpp',
+            'src/planners/araplanner.cpp',
+            'src/planners/lazyARA.cpp',
+            'src/planners/mhaplanner.cpp',
+            'src/planners/ppcpplanner.cpp',
+            'src/planners/rstarplanner.cpp',
+            'src/planners/viplanner.cpp',
+            'src/utils/heap.cpp',
+            'src/utils/mdp.cpp',
+            'src/utils/utils.cpp',
+            'src/utils/2Dgridsearch.cpp',
+            'src/utils/config.cpp',
             'src/python_wrapper.cpp'])
     ]
 )

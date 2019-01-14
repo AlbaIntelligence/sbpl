@@ -1909,7 +1909,7 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(const char* sEnvFile)
     FILE* fCfg = fopen(sEnvFile, "r");
     if (fCfg == NULL) {
         SBPL_ERROR("ERROR: unable to open %s\n", sEnvFile);
-        throw SBPL_Exception();
+        throw SBPL_Exception("ERROR: unable to open environment config");
     }
     ReadConfiguration(fCfg);
     fclose(fCfg);

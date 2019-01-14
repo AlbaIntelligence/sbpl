@@ -6,17 +6,12 @@ import _sbpl_module
 import os
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 
+from sbpl.planners import create_planner
+from sbpl.utilities.costmap_2d_python import CostMap2D
 
-
-def create_planner(planner_name, environment, forward_search):
-    return {
-        'arastar': _sbpl_module.ARAPlanner,
-        'adstar': _sbpl_module.ADPlanner,
-        'anastar': _sbpl_module.anaPlanner,
-    }[planner_name](environment, forward_search)
-
+from sbpl.utilities.map_drawing_utils import prepare_canvas, draw_robot, draw_trajectory
+from sbpl.utilities.map_drawing_utils import draw_world_map
 
 
 def mprim_folder():
@@ -29,23 +24,23 @@ def env_examples_folder():
     return os.path.abspath(os.path.join(current_dir, '../env_examples'))
 
 
-if __name__ == '__main__':
-    true_env = _sbpl_module.EnvironmentNAVXYTHETALAT(
-        # os.path.join(env_examples_folder(), 'nav3d/env1.cfg')
-        os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg')
-    )
+def planandnavigatexythetalat(environment_config, motion_primitives, planner_name):
+    """
+    Python port of planandnavigatexythetalat from sbpl test/main.cpp
+    """
+    true_env = _sbpl_module.EnvironmentNAVXYTHETALAT(environment_config)
     params = true_env.get_params()
+    cost_obstacle, cost_inscribed, cost_possibly_circum = true_env.get_cost_thresholds()
+    true_costmap = true_env.get_costmap()
+    max_cost = np.amax(true_costmap)
+
+    assert cost_obstacle == CostMap2D.LETHAL_OBSTACLE
+    assert cost_inscribed == CostMap2D.INSCRIBED_INFLATED_OBSTACLE
 
     # check the start and goal obtained from the true environment
     print("start: %f %f %f, goal: %f %f %f\n" % (
         params.startx, params.starty, params.starttheta,
         params.goalx, params.goaly, params.goaltheta))
-
-    # costmap = true_env.get_costmap()
-    # plt.imshow(costmap, vmin=0, vmax=254)
-    # plt.ylim([0, costmap.shape[0]])
-    # plt.xlim([0, costmap.shape[1]])
-    # plt.show()
 
     footprint = np.zeros((4, 2))
     halfwidth = 0.01
@@ -55,16 +50,12 @@ if __name__ == '__main__':
     footprint[2, :] = (halflength, halfwidth)
     footprint[3, :] = (-halflength, halfwidth)
 
-    motion_primitives = os.path.join(mprim_folder(), 'pr2.mprim')
-    # motion_primitives = os.path.join(mprim_folder(), 'pr2_10cm.mprim')
-
     empty_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
     env = _sbpl_module.EnvironmentNAVXYTHETALAT(footprint, motion_primitives, empty_map, params)
 
     # compute sensing as a square surrounding the robot with length twice that of the
     # longest motion primitive
 
-    primitives = env.get_motion_primitives()
     max_mot_prim_length_squared = 0
     for p in env.get_motion_primitives():
         dx = p.endcell[0]
@@ -79,9 +70,7 @@ if __name__ == '__main__':
 
     incremental_sensing = _sbpl_module.IncrementalSensing(10*int(max_motor_primitive_length + 0.5))
 
-    # planner = create_planner("arastar", env, False)
-    planner = create_planner("adstar", env, False)
-    # planner = create_planner("anastar", env, False)
+    planner = create_planner(planner_name, env, False)
 
     planner.set_start_goal_from_env(env)
     planner.set_planning_params(
@@ -96,10 +85,9 @@ if __name__ == '__main__':
     goaltol_x = 0.001
     goaltol_y = 0.001
     goaltol_theta = 0.001
-    steps_along_the_path = 20
+    steps_along_the_path = 1
 
     start_pose = np.array((params.startx, params.starty, params.starttheta))
-    goal_pose = np.array((params.goalx, params.goaly, params.goaltheta))
 
     # now comes the main loop
     while (abs(start_pose[0] - params.goalx) > goaltol_x or
@@ -109,7 +97,10 @@ if __name__ == '__main__':
         changed_cells = incremental_sensing.sense_environment(start_pose, true_env, env)
         planner.apply_environment_changes(changed_cells, env)
 
+        print("new planning...")
         plan_xytheta, plan_xytheta_cell, plan_time, solution_eps = planner.replan(env, allocated_time=10.)
+        print("done with the solution of size=%d and sol. eps=%f", len(plan_xytheta_cell), solution_eps)
+        print("actual path (with intermediate poses) size=%d", len(plan_xytheta))
 
         if len(plan_xytheta_cell):
             # move until we move into the end of motion primitive
@@ -126,16 +117,23 @@ if __name__ == '__main__':
             new_start_pose = start_pose
             print("No move is made")
 
-        current_map = env.get_costmap()
-
-        plt.imshow(current_map, vmin=0, vmax=np.amax(current_map))
-        plt.ylim([0, current_map.shape[0]])
-        plt.xlim([0, current_map.shape[1]])
-        plt.plot(int(start_pose[0]/params.cellsize_m), int(start_pose[1]/params.cellsize_m), 'r*')
-        plt.plot(int(new_start_pose[0] / params.cellsize_m), int(new_start_pose[1] / params.cellsize_m), 'g*')
-        plt.plot(plan_xytheta_cell[:, 0], plan_xytheta_cell[:, 1], 'y-')
-        plt.show()
+        img = prepare_canvas(true_costmap.shape)
+        draw_world_map(img, true_costmap)
+        draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
+        draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
+        draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))
+        cv2.imshow("current map", img)
+        cv2.waitKey(-1)
 
         start_pose = new_start_pose
 
     print('Goal reached')
+
+
+if __name__ == '__main__':
+    planandnavigatexythetalat(
+        environment_config=os.path.join(env_examples_folder(), 'nav3d/env1.cfg'),
+        # environment_config=os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
+        motion_primitives=os.path.join(mprim_folder(), 'pr2.mprim'),
+        planner_name='adstar'
+    )
