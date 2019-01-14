@@ -283,20 +283,155 @@ py::tuple py_navigation_iteration(
     std::vector<sbpl_xy_theta_pt_t> xythetaPath;
     std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
 
-    navigationIteration(
-        startx, starty, starttheta,
-        trueEnvWrapper.env(),
-        envWrapper.env(),
-        incrementalSensingWrapper.get_sensecells(),
-        map,
-        planner,
-        params,
-        allocated_time_secs_foreachplan,
-        plan_time,
-        solution_epsilon,
-        xythetaPath,
-        xythetaCellPath
-    );
+    auto sensecells = incrementalSensingWrapper.get_sensecells();
+    const EnvironmentNAVXYTHETALAT& trueenvironment_navxythetalat = trueEnvWrapper.env();
+    EnvironmentNAVXYTHETALAT& environment_navxythetalat = envWrapper.env();
+
+    std::vector<int> preds_of_changededgesIDV;
+    std::vector<nav2dcell_t> changedcellsV;
+    std::vector<int> solution_stateIDs_V;
+
+    //simulate sensor data update
+    bool bChanges = false;
+    bool bPrint = false;
+
+    // simulate sensing the cells
+    for (int i = 0; i < (int)sensecells.size(); i++) {
+        int x = CONTXY2DISC(startx, params.cellsize_m) + sensecells.at(i).x;
+        int y = CONTXY2DISC(starty, params.cellsize_m) + sensecells.at(i).y;
+
+        // ignore if outside the map
+        if (x < 0 || x >= params.size_x || y < 0 || y >= params.size_y) {
+            continue;
+        }
+
+        int index = x + y * params.size_x;
+        unsigned char truecost = trueenvironment_navxythetalat.GetMapCost(x, y);
+        // update the cell if we haven't seen it before
+        if (map[index] != truecost) {
+            map[index] = truecost;
+            environment_navxythetalat.UpdateCost(x, y, map[index]);
+            printf("setting cost[%d][%d] to %d\n", x, y, map[index]);
+            bChanges = true;
+            // store the changed cells
+            nav2dcell_t nav2dcell;
+            nav2dcell.x = x;
+            nav2dcell.y = y;
+            changedcellsV.push_back(nav2dcell);
+        }
+    }
+
+    double TimeStarted = clock();
+
+    // if necessary notify the planner of changes to costmap
+    if (bChanges) {
+        if (dynamic_cast<ARAPlanner*> (planner) != NULL) {
+            ((ARAPlanner*)planner)->costs_changed(); //use by ARA* planner (non-incremental)
+        }
+        else if (dynamic_cast<ADPlanner*> (planner) != NULL) {
+            // get the affected states
+            environment_navxythetalat.GetPredsofChangedEdges(&changedcellsV, &preds_of_changededgesIDV);
+            // let know the incremental planner about them
+            //use by AD* planner (incremental)
+            ((ADPlanner*)planner)->update_preds_of_changededges(&preds_of_changededgesIDV);
+            printf("%d states were affected\n", (int)preds_of_changededgesIDV.size());
+        }
+    }
+
+    int startx_c = CONTXY2DISC(startx, params.cellsize_m);
+    int starty_c = CONTXY2DISC(starty, params.cellsize_m);
+    int starttheta_c = ContTheta2Disc(starttheta, params.numThetas);
+
+    // plan a path
+    bool bPlanExists = false;
+
+    printf("new planning...\n");
+    bPlanExists = (planner->replan(allocated_time_secs_foreachplan, &solution_stateIDs_V) == 1);
+    printf("done with the solution of size=%d and sol. eps=%f\n", (unsigned int)solution_stateIDs_V.size(),
+           planner->get_solution_eps());
+    environment_navxythetalat.PrintTimeStat(stdout);
+
+    plan_time = (clock() - TimeStarted) / ((double)CLOCKS_PER_SEC);
+    solution_epsilon = planner->get_solution_eps();
+
+    environment_navxythetalat.ConvertStateIDPathintoXYThetaPath(&solution_stateIDs_V, &xythetaPath);
+    printf("actual path (with intermediate poses) size=%d\n", (unsigned int)xythetaPath.size());
+    for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
+        sbpl_xy_theta_cell_t xytheta_cell;
+        environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], xytheta_cell.x, xytheta_cell.y, xytheta_cell.theta);
+        xythetaCellPath.push_back(xytheta_cell);
+    }
+    // print the map (robot's view of the world and current plan)
+//        int startindex = startx_c + starty_c * size_x;
+//        int goalindex = goalx_c + goaly_c * size_x;
+//        for (int y = 0; bPrintMap && y < size_y; y++) {
+//            for (int x = 0; x < size_x; x++) {
+//                int index = x + y * size_x;
+//                int cost = map[index];
+//                cost = environment_navxythetalat.GetMapCost(x, y);
+//
+//                // check to see if it is on the path
+//                bool bOnthePath = false;
+//                for (int j = 1; j < (int)solution_stateIDs_V.size(); j++) {
+//                    int newx, newy, newtheta = 0;
+//                    environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[j], newx, newy, newtheta);
+//                    if (x == newx && y == newy) bOnthePath = true;
+//                }
+//
+//                if (index != startindex && index != goalindex && !bOnthePath) {
+//                    printf("%3d ", cost);
+//                }
+//                else if (index == startindex) {
+//                    printf("  X ");
+//                }
+//                else if (index == goalindex) {
+//                    printf("  G ");
+//                }
+//                else if (bOnthePath) {
+//                    printf("  * ");
+//                }
+//                else {
+//                    printf("? ");
+//                }
+//            }
+//            printf("\n");
+//        }
+
+    // move along the path
+    if (bPlanExists && (int)xythetaPath.size() > 1) {
+        //get coord of the successor
+        int newx, newy, newtheta;
+
+        // move until we move into the end of motion primitive
+        environment_navxythetalat.GetCoordFromState(solution_stateIDs_V[1], newx, newy, newtheta);
+
+        printf("moving from %d %d %d to %d %d %d\n", startx_c, starty_c, starttheta_c, newx, newy, newtheta);
+
+        // this check is weak since true configuration does not know the actual perimeter of the robot
+        if (!trueenvironment_navxythetalat.IsValidConfiguration(newx, newy, newtheta)) {
+            throw SBPL_Exception("ERROR: robot is commanded to move into an invalid configuration according to true environment");
+        }
+
+        // move
+        startx = DISCXY2CONT(newx, params.cellsize_m);
+        starty = DISCXY2CONT(newy, params.cellsize_m);
+        starttheta = DiscTheta2Cont(newtheta, params.numThetas);
+
+        // update the environment
+        int newstartstateID = environment_navxythetalat.SetStart(startx, starty, starttheta);
+
+        // update the planner
+        if (planner->set_start(newstartstateID) == 0) {
+            throw SBPL_Exception("ERROR: failed to update robot pose in the planner");
+        }
+    }
+    else {
+        printf("No move is made\n");
+    }
+
+    if (bPrint) {
+        printf("System Pause (return=%d)\n", system("pause"));
+    }
 
     py::safe_array<double> new_start_pose_array({3});
     auto new_start_pose = new_start_pose_array.mutable_unchecked();
