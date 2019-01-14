@@ -256,56 +256,56 @@ private:
 };
 
 
-int run_planandnavigatexythetalat(
+py::tuple py_navigation_iteration(
     const EnvironmentNAVXYTHETALATWrapper& trueEnvWrapper,
     EnvironmentNAVXYTHETALATWrapper& envWrapper,
     SBPLPlannerWrapper& plannerWrapper,
+    const py::safe_array<double>& start_pose_array,
     const IncrementalSensingWrapper& incrementalSensingWrapper,
     py::safe_array<unsigned char>& empty_map) {
 
     double allocated_time_secs_foreachplan = 10.0; // in seconds
 
-    double goaltol_x = 0.001, goaltol_y = 0.001, goaltol_theta = 0.001;
-
-    SBPLPlanner* planner = plannerWrapper.planner();
-
     // environment parameters
     EnvNAVXYTHETALAT_InitParms params = trueEnvWrapper.get_params();
 
-    // create an empty map
     unsigned char* map = &empty_map.mutable_unchecked<2>()(0, 0);
 
-    double startx = params.startx;
-    double starty = params.starty;
-    double starttheta = params.starttheta;
+    auto start_pose = start_pose_array.unchecked<1>();
 
-    // now comes the main loop
-    while (fabs(startx - params.goalx) > goaltol_x || fabs(starty - params.goaly) > goaltol_y || fabs(starttheta - params.goaltheta)
-        > goaltol_theta) {
-        double plan_time, solution_epsilon;
-        std::vector<sbpl_xy_theta_pt_t> xythetaPath;
-        std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
+    double startx = start_pose(0);
+    double starty = start_pose(1);
+    double starttheta = start_pose(2);
 
-        navigationIteration(
-            startx, starty, starttheta,
-            trueEnvWrapper.env(),
-            envWrapper.env(),
-            incrementalSensingWrapper.get_sensecells(),
-            map,
-            planner,
-            params,
-            allocated_time_secs_foreachplan,
-            plan_time,
-            solution_epsilon,
-            xythetaPath,
-            xythetaCellPath
-        );
-    }
-    printf("goal reached!\n");
+    SBPLPlanner* planner = plannerWrapper.planner();
 
-    return 1;
+    double plan_time, solution_epsilon;
+    std::vector<sbpl_xy_theta_pt_t> xythetaPath;
+    std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
+
+    navigationIteration(
+        startx, starty, starttheta,
+        trueEnvWrapper.env(),
+        envWrapper.env(),
+        incrementalSensingWrapper.get_sensecells(),
+        map,
+        planner,
+        params,
+        allocated_time_secs_foreachplan,
+        plan_time,
+        solution_epsilon,
+        xythetaPath,
+        xythetaCellPath
+    );
+
+    py::safe_array<double> new_start_pose_array({3});
+    auto new_start_pose = new_start_pose_array.mutable_unchecked();
+    new_start_pose(0) = startx;
+    new_start_pose(1) = starty;
+    new_start_pose(2) = starttheta;
+
+    return py::make_tuple(new_start_pose_array);
 }
-
 
 /**
  * @brief pybind module
@@ -315,7 +315,7 @@ int run_planandnavigatexythetalat(
 PYBIND11_MODULE(_sbpl_module, m) {
     m.doc() = "Python wrapper for SBPL planners";
 
-    m.def("planandnavigatexythetalat", &run_planandnavigatexythetalat);
+    m.def("navigation_iteration", &py_navigation_iteration);
 
     //struct SBPL_xytheta_mprimitive
 //{

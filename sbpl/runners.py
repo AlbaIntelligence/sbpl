@@ -93,11 +93,26 @@ if __name__ == '__main__':
 
     current_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
 
-    _sbpl_module.planandnavigatexythetalat(
-        # os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
-        true_env,
-        env,
-        planner,
-        incremental_sensing,
-        current_map
-    )
+    goaltol_x = 0.001
+    goaltol_y = 0.001
+    goaltol_theta = 0.001
+
+    start_pose = np.array((params.startx, params.starty, params.starttheta))
+    goal_pose = np.array((params.goalx, params.goaly, params.goaltheta))
+
+    # now comes the main loop
+    while (abs(start_pose[0] - params.goalx) > goaltol_x or
+           abs(start_pose[1] - params.goaly) > goaltol_y or
+           abs(start_pose[2] - params.goaltheta) > goaltol_theta):
+        result = _sbpl_module.navigation_iteration(
+            true_env,
+            env,
+            planner,
+            start_pose,
+            incremental_sensing,
+            current_map
+        )
+        start_pose = result[0]
+        print(start_pose, goal_pose)
+
+    print('Goal reached')
