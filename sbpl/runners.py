@@ -7,6 +7,7 @@ import os
 import numpy as np
 import cv2
 
+from sbpl.environments import EnvironmentNAVXYTHETALAT
 from sbpl.motion_primitives import mprim_folder
 from sbpl.planners import create_planner
 from sbpl.utilities.costmap_2d_python import CostMap2D
@@ -24,11 +25,10 @@ def planandnavigatexythetalat(environment_config, motion_primitives, planner_nam
     """
     Python port of planandnavigatexythetalat from sbpl test/main.cpp
     """
-    true_env = _sbpl_module.EnvironmentNAVXYTHETALAT(environment_config)
+    true_env = EnvironmentNAVXYTHETALAT(environment_config)
     params = true_env.get_params()
     cost_obstacle, cost_inscribed, cost_possibly_circum = true_env.get_cost_thresholds()
     true_costmap = true_env.get_costmap()
-    max_cost = np.amax(true_costmap)
 
     assert cost_obstacle == CostMap2D.LETHAL_OBSTACLE
     assert cost_inscribed == CostMap2D.INSCRIBED_INFLATED_OBSTACLE
@@ -47,13 +47,13 @@ def planandnavigatexythetalat(environment_config, motion_primitives, planner_nam
     footprint[3, :] = (-halflength, halfwidth)
 
     empty_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
-    env = _sbpl_module.EnvironmentNAVXYTHETALAT(footprint, motion_primitives, empty_map, params)
+    env = EnvironmentNAVXYTHETALAT(footprint, motion_primitives, empty_map, params)
 
     # compute sensing as a square surrounding the robot with length twice that of the
     # longest motion primitive
 
     max_mot_prim_length_squared = 0
-    for p in env.get_motion_primitives():
+    for p in env.get_motion_primitives().get_primitives():
         dx = p.endcell[0]
         dy = p.endcell[1]
         primitive_length = dx * dx + dy * dy

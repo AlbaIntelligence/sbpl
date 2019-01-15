@@ -5,7 +5,7 @@ from __future__ import division
 import cv2
 import numpy as np
 from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.path_tools import world_to_pixel, pixel_to_world, get_pixel_footprint, blit, draw_arrow
+from sbpl.utilities.path_tools import world_to_pixel, pixel_to_world, get_pixel_footprint, blit
 
 
 """
@@ -84,7 +84,7 @@ def get_pixel_footprint_for_drawing(angle, robot_footprint, map_resolution, fill
 
 
 def draw_trajectory(array_to_draw, resolution, origin, trajectory, color=(0, 255, 0),
-                    enforce_bounds=False, with_orientation=False, thickness=1):
+                    enforce_bounds=False, thickness=1):
     if len(trajectory) == 0:
         return
     drawing_coords = get_drawing_coordinates_from_physical(
@@ -95,13 +95,6 @@ def draw_trajectory(array_to_draw, resolution, origin, trajectory, color=(0, 255
         enforce_bounds=enforce_bounds)
 
     cv2.polylines(array_to_draw, [drawing_coords], False, color, thickness=thickness)
-    if with_orientation:
-        index = len(drawing_coords) - 2
-        while (index >= 0 and np.array_equal(drawing_coords[index], drawing_coords[-1])):
-            index -= 1
-        if index >= 0:
-            draw_arrow(array_to_draw, tuple(drawing_coords[index]), tuple(drawing_coords[-1] - drawing_coords[index]),
-                       10, (255, 255, 255))
 
 
 def _mark_wall_on_static_map(static_map, p0, p1, width, color):
@@ -181,3 +174,29 @@ def puttext_centered(im, text, pos, font=cv2.FONT_HERSHEY_PLAIN, size=0.6, color
     x = int(pos[0] - text_size[0] // 2)  # it is complaining (integer argument expected)
 
     cv2.putText(im, text, (x, y), font, size, color)
+
+
+def draw_arrow(image, pose, arrow_length, origin, resolution, color,
+               arrow_magnitude=4, thickness=1, line_type=8, shift=0):
+    # adapted from http://mlikihazar.blogspot.com.au/2013/02/draw-arrow-opencv.html
+    # draw arrow tail
+    xy_start = pose[:2]
+    xy_end = xy_start + arrow_length*np.array(([np.cos(pose[2]), np.sin(pose[2])]))
+
+    p = get_drawing_coordinates_from_physical(image.shape, resolution, origin, xy_start)
+    q = get_drawing_coordinates_from_physical(image.shape, resolution, origin, xy_end)
+    p = (int(p[0]), int(p[1]))
+    q = (int(q[0]), int(q[1]))
+    cv2.line(image, p, q, color, thickness, line_type, shift)
+    arrow_angle = get_drawing_angle_from_physical(pose[2])
+
+    # starting point of first line of arrow head
+    p = (int(q[0] + arrow_magnitude * np.cos(arrow_angle + 3*np.pi/4)),
+         int(q[1] + arrow_magnitude * np.sin(arrow_angle + 3*np.pi/4)))
+    # draw first half of arrow head
+    cv2.line(image, p, q, color, thickness, line_type, shift)
+    # starting point of second line of arrow head
+    p = (int(q[0] + arrow_magnitude * np.cos(arrow_angle - 3*np.pi/4)),
+         int(q[1] + arrow_magnitude * np.sin(arrow_angle - 3*np.pi/4)))
+    # draw second half of arrow head
+    cv2.line(image, p, q, color, thickness, line_type, shift)

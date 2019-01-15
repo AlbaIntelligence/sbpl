@@ -288,7 +288,6 @@ def orient_path(path, robot_pose=None, final_pose=None, max_movement_for_turn_in
     return oriented_path
 
 
-
 def diff_angles(a1, a2):
     '''
     normalized a1 - a2
@@ -302,6 +301,28 @@ def normalize_angle(z):
     # http://stackoverflow.com/questions/15927755/opposite-of-numpy-unwrap
     '''
     return (np.array(z) + np.pi) % (2*np.pi) - np.pi
+
+
+def angle_cont_to_discrete(angle, num_angles):
+    '''
+    Python port of ContTheta2Disc from sbpl utils (from continuous angle to one of uniform ones)
+    :param angle float: float angle
+    :param num_angles int: number of angles in 2*pi range
+    :return: discrete angle
+    '''
+    bin_size = 2*np.pi/num_angles
+    return int(normalize_angle(angle + bin_size/2.)/(2*np.pi) * num_angles)
+
+
+def angle_discrete_to_cont(angle_cell, num_angles):
+    '''
+    Python port of DiscTheta2Cont from sbpl utils (from discrete angle to continuous)
+    :param angle_cell int: discrete angle
+    :param num_angles int: number of angles in 2*pi range
+    :return: discrete angle
+    '''
+    bin_size = 2*np.pi/num_angles
+    return angle_cell*bin_size
 
 
 def path_velocity(path):
@@ -329,26 +350,6 @@ def path_velocity(path):
         raise Exception("Path has missing/corrupted angle data at indices: %s. Data: %s" %
                         (bad_indices, dangle[bad_indices]))
     return ds/dt, dangle/dt
-
-
-def draw_arrow(image, p, q, color, arrow_magnitude=5, thickness=1, line_type=8, shift=0):
-    # adapted from http://mlikihazar.blogspot.com.au/2013/02/draw-arrow-opencv.html
-    # draw arrow tail
-    p = (int(p[0]), int(p[1]))
-    q = (int(q[0]), int(q[1]))
-    cv2.line(image, p, q, color, thickness, line_type, shift)
-    # calc angle of the arrow
-    angle = np.arctan2(p[1]-q[1], p[0]-q[0])
-    # starting point of first line of arrow head
-    p = (int(q[0] + arrow_magnitude * np.cos(angle + np.pi/4)),
-         int(q[1] + arrow_magnitude * np.sin(angle + np.pi/4)))
-    # draw first half of arrow head
-    cv2.line(image, p, q, color, thickness, line_type, shift)
-    # starting point of second line of arrow head
-    p = (int(q[0] + arrow_magnitude * np.cos(angle - np.pi/4)),
-         int(q[1] + arrow_magnitude * np.sin(angle - np.pi/4)))
-    # draw second half of arrow head
-    cv2.line(image, p, q, color, thickness, line_type, shift)
 
 
 def pose_distances(pose0, pose1):

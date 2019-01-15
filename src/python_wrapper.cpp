@@ -197,9 +197,7 @@ public:
     }
 
     py::tuple get_cost_thresholds() const {
-
         const EnvNAVXYTHETALATConfig_t* pConfig = _environment.GetEnvNavConfig();
-
         return py::make_tuple(pConfig->obsthresh, pConfig->cost_inscribed_thresh, pConfig->cost_possibly_circumscribed_thresh);
     }
 
@@ -422,7 +420,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
                      EnvNAVXYTHETALAT_InitParms>())
        .def("get_params", &EnvironmentNAVXYTHETALATWrapper::get_params)
        .def("get_costmap", &EnvironmentNAVXYTHETALATWrapper::get_costmap)
-       .def("get_motion_primitives", &EnvironmentNAVXYTHETALATWrapper::get_motion_primitives)
+       .def("get_motion_primitives_list", &EnvironmentNAVXYTHETALATWrapper::get_motion_primitives)
        .def("xytheta_real_to_cell", &EnvironmentNAVXYTHETALATWrapper::xytheta_real_to_cell)
        .def("xytheta_cell_to_real", &EnvironmentNAVXYTHETALATWrapper::xytheta_cell_to_real)
        .def("is_valid_configuration", &EnvironmentNAVXYTHETALATWrapper::is_valid_configuration)
