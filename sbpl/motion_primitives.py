@@ -108,12 +108,12 @@ def debug_motion_primitives(motion_primitives):
             try:
                 np.testing.assert_array_almost_equal(final_float_state, p.get_intermediate_states()[-1][:2])
             except AssertionError:
-                print("NOT EQUAL POSE", final_float_state, p.get_intermediate_states()[-1])
+                print("POSE DOESN'T LAND TO A CELL", final_float_state, p.get_intermediate_states()[-1])
 
             try:
                 np.testing.assert_array_almost_equal(final_float_angle, p.get_intermediate_states()[-1][2], decimal=3)
             except AssertionError:
-                print("NOT EQUAL ANGLE", np.degrees(final_float_angle), np.degrees(p.get_intermediate_states()[-1][2]))
+                print("ANGLE DOESN'T LAND TO AN ANGLE CELL", np.degrees(final_float_angle), np.degrees(p.get_intermediate_states()[-1][2]))
 
         endcells = np.array([p.endcell for p in primitives])
         image_half_width = np.amax(np.amax(np.abs(endcells), 0)[:2]) + 1
@@ -132,8 +132,6 @@ def debug_motion_primitives(motion_primitives):
                        origin, resolution, color=(0, 0, 200))
         cv2.imshow('a', img)
         cv2.waitKey(-1)
-
-        # plt.show()
 
 
 def dump_motion_primitives(motion_primitives, filename):
@@ -168,14 +166,7 @@ def assert_motion_primitives_equal(motion_primitives_0, motion_primitives_1):
         np.testing.assert_almost_equal(p0.get_intermediate_states(), p1.get_intermediate_states(), decimal=4)
 
 
+
 if __name__ == '__main__':
     mprimtives = load_motion_pritimives(os.path.join(mprim_folder(), 'custom/gtx_32_10.mprim'))
-    import tempfile
-    tempdir = tempfile.mkdtemp()
-    primitives_filename = os.path.join(tempdir, 'a.mprim')
-    print(primitives_filename)
-    dump_motion_primitives(mprimtives, primitives_filename)
-
-    load_motion_pritimives(primitives_filename)
-
-    # debug_motion_primitives(mprimtives)
+    debug_motion_primitives(mprimtives)
