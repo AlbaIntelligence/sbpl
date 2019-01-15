@@ -6,11 +6,9 @@ import _sbpl_module
 import numpy as np
 import os
 import cv2
-import matplotlib.pyplot as plt
-from matplotlib.patches import Arc
 
 from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_arrow
-from sbpl.utilities.path_tools import angle_cont_to_discrete, world_to_pixel, pixel_to_world, angle_discrete_to_cont
+from sbpl.utilities.path_tools import pixel_to_world, angle_discrete_to_cont
 
 
 def mprim_folder():
@@ -64,37 +62,7 @@ def load_motion_pritimives(mprim_filename):
     return MotionPrimitives(resolution, number_of_angles, env.get_motion_primitives_list())
 
 
-def circarrow(self, diameter, centX, centY, startangle, angle, **kwargs):
-    """
-    Round arrow
-    https://stackoverflow.com/questions/44526103/matplotlib-draw-curved-arrow-that-looks-just-like-pyplot-arrow
-    """
-    startarrow=kwargs.pop("startarrow",False)
-    endarrow=kwargs.pop("endarrow",False)
-
-    arc = Arc([centX,centY],diameter,diameter,angle=startangle,
-          theta1=np.rad2deg(kwargs.get("head_length",1.5*3*.001)) if startarrow else 0,theta2=angle-(np.rad2deg(kwargs.get("head_length",1.5*3*.001)) if endarrow else 0),linestyle="-",color=kwargs.get("color","black"))
-    self.axes().add_patch(arc)
-
-    if startarrow:
-        startX=diameter/2*np.cos(np.radians(startangle))
-        startY=diameter/2*np.sin(np.radians(startangle))
-        startDX=+.000001*diameter/2*np.sin(np.radians(startangle)+kwargs.get("head_length",1.5*3*.001))
-        startDY=-.000001*diameter/2*np.cos(np.radians(startangle)+kwargs.get("head_length",1.5*3*.001))
-        self.arrow(startX-startDX,startY-startDY,startDX,startDY,**kwargs)
-
-    if endarrow:
-        endX=diameter/2*np.cos(np.radians(startangle+angle))
-        endY=diameter/2*np.sin(np.radians(startangle+angle))
-        endDX=-.000001*diameter/2*np.sin(np.radians(startangle+angle)-kwargs.get("head_length",1.5*3*.001))
-        endDY=+.000001*diameter/2*np.cos(np.radians(startangle+angle)-kwargs.get("head_length",1.5*3*.001))
-        self.arrow(endX-endDX,endY-endDY,endDX,endDY,**kwargs)
-
-import types
-plt.circarrow = types.MethodType(circarrow,plt)
-
-
-def debug_motion_primitives(motion_primitives):
+def check_motion_primitives(motion_primitives):
     angle_to_primitive = {}
     for p in motion_primitives.get_primitives():
         try:
@@ -105,6 +73,21 @@ def debug_motion_primitives(motion_primitives):
     # every angle has the same number of primitives
     assert np.all(len(angle_to_primitive.values()[0]) == np.array([len(v) for v in angle_to_primitive.values()]))
     assert set(angle_to_primitive.keys()) == set(range(len(angle_to_primitive)))
+
+    # angles are ordered
+    angles = np.array([p.starttheta_c for p in motion_primitives.get_primitives()])
+    assert np.all(np.diff(angles) >= 0)
+
+    for angle_primitives in angle_to_primitive.values():
+        # ids are ordered inside the angle
+        primitive_ids = np.array([p.motprimID for p in angle_primitives])
+        assert np.all(np.arange(len(angle_primitives)) == primitive_ids)
+
+    return angle_to_primitive
+
+
+def debug_motion_primitives(motion_primitives):
+    angle_to_primitive = check_motion_primitives(motion_primitives)
 
     all_angles = np.arange(motion_primitives.get_number_of_angles())*np.pi*2/motion_primitives.get_number_of_angles()
     print(all_angles)
@@ -132,7 +115,6 @@ def debug_motion_primitives(motion_primitives):
             except AssertionError:
                 print("NOT EQUAL ANGLE", np.degrees(final_float_angle), np.degrees(p.get_intermediate_states()[-1][2]))
 
-
         endcells = np.array([p.endcell for p in primitives])
         image_half_width = np.amax(np.amax(np.abs(endcells), 0)[:2]) + 1
         zoom = 40
@@ -154,9 +136,46 @@ def debug_motion_primitives(motion_primitives):
         # plt.show()
 
 
+def dump_motion_primitives(motion_primitives, filename):
+    check_motion_primitives(motion_primitives)
 
+    with open(filename, 'w') as f:
+        f.write('resolution_m: %.6f\n' % motion_primitives.get_resolution())
+        f.write('numberofangles: %d\n' % motion_primitives.get_number_of_angles())
+        f.write('totalnumberofprimitives: %d\n' % len(motion_primitives.get_primitives()))
+
+        for p in motion_primitives.get_primitives():
+            f.write('primID: %d\n' % p.motprimID)
+            f.write('startangle_c: %d\n' % p.starttheta_c)
+            f.write('endpose_c: %d %d %d\n' % (p.endcell[0], p.endcell[1], p.endcell[2]))
+            f.write('additionalactioncostmult: %d\n' % p.additionalactioncostmult)
+            states = p.get_intermediate_states()
+            f.write('intermediateposes: %d\n' % len(states))
+            for s in states:
+                f.write('%.4f %.4f %.4f\n' % (s[0], s[1], s[2]))
+
+
+def assert_motion_primitives_equal(motion_primitives_0, motion_primitives_1):
+    assert motion_primitives_0.get_resolution() == motion_primitives_1.get_resolution()
+    assert motion_primitives_0.get_number_of_angles() == motion_primitives_1.get_number_of_angles()
+    assert len(motion_primitives_0.get_primitives()) == len(motion_primitives_1.get_primitives())
+
+    for p0, p1 in zip(motion_primitives_0.get_primitives(), motion_primitives_1.get_primitives()):
+        assert p0.motprimID == p1.motprimID
+        assert p0.starttheta_c == p1.starttheta_c
+        np.testing.assert_array_equal(p0.endcell, p1.endcell)
+        assert p0.additionalactioncostmult == p1.additionalactioncostmult
+        np.testing.assert_almost_equal(p0.get_intermediate_states(), p1.get_intermediate_states(), decimal=4)
 
 
 if __name__ == '__main__':
     mprimtives = load_motion_pritimives(os.path.join(mprim_folder(), 'custom/gtx_32_10.mprim'))
-    debug_motion_primitives(mprimtives)
+    import tempfile
+    tempdir = tempfile.mkdtemp()
+    primitives_filename = os.path.join(tempdir, 'a.mprim')
+    print(primitives_filename)
+    dump_motion_primitives(mprimtives, primitives_filename)
+
+    load_motion_pritimives(primitives_filename)
+
+    # debug_motion_primitives(mprimtives)
