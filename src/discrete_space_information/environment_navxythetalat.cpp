@@ -2535,6 +2535,7 @@ int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad)
 
     if (!IsValidConfiguration(x, y, theta)) {
         SBPL_PRINTF("WARNING: goal configuration is invalid\n");
+        return -1;
     }
 
     EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
@@ -2577,6 +2578,7 @@ int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad)
 
     if (!IsValidConfiguration(x, y, theta)) {
         SBPL_PRINTF("WARNING: start configuration %d %d %d is invalid\n", x, y, theta);
+        return -1;
     }
 
     EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
