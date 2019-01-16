@@ -103,7 +103,6 @@ def check_motion_primitives(motion_primitives):
     # check that intermediate states start at 0 with proper orientation
     for p in motion_primitives.get_primitives():
         first_state = p.get_intermediate_states()[0]
-        print(first_state)
         assert first_state[0] == 0
         assert first_state[1] == 0
         np.testing.assert_almost_equal(

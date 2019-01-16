@@ -92,6 +92,8 @@ def perform_single_planning(
     if debug:
         print(environment.xytheta_real_to_cell(start_pose), environment.xytheta_real_to_cell(goal_pose))
         print(plan_xytheta_cell)
+
+        print(start_pose, plan_xytheta)
         print("done with the solution of size=%d and sol. eps=%f" % (len(plan_xytheta_cell), solution_eps))
         print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
 
@@ -110,4 +112,4 @@ def perform_single_planning(
         cv2.imshow("planning result", img)
         cv2.waitKey(-1)
 
-    return plan_xytheta, plan_xytheta_cell, plan_time, solution_eps
+    return plan_xytheta, plan_xytheta_cell, plan_time, solution_eps, environment

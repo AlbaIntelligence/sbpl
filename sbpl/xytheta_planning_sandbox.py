@@ -2,21 +2,23 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 import numpy as np
+import cv2
 
 from sbpl.motion_primitives import MotionPrimitives, create_linear_primitive
 from sbpl.planners import perform_single_planning
 from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.map_drawing_utils import add_wall_to_static_map
+from sbpl.utilities.map_drawing_utils import add_wall_to_static_map, draw_trajectory, draw_robot, prepare_canvas, \
+    draw_world_map
 
 
-def box_planning():
-    costmap = CostMap2D.create_empty((10, 10), 0.2, np.zeros((2,)))
+def box_planning(debug):
+    costmap = CostMap2D.create_empty((4, 4), 0.2, np.zeros((2,)))
 
-    gap = 1.3
-    add_wall_to_static_map(costmap, (0, 5), (4, 5), width=0.0)
-    add_wall_to_static_map(costmap, (4+gap, 5), (10, 5), width=0.0)
+    gap = 1.0
+    add_wall_to_static_map(costmap, (0, 2), (2, 2), width=0.0)
+    add_wall_to_static_map(costmap, (2+gap, 2), (4, 2), width=0.0)
 
-    footprint_width = 1.
+    footprint_width = 0.79
     footprint = np.array(
         [[0.5*footprint_width, 0.5*footprint_width],
          [-0.5 * footprint_width+1e-6, 0.5 * footprint_width],
@@ -48,20 +50,46 @@ def box_planning():
         mprim_list=batch
     )
 
-    perform_single_planning(
+    start_pose = np.array([2.8, 1.3, 0.])
+    goal_pose = np.array([2.8, 2.8, 0.])
+    plan_xytheta, plan_xytheta_cell, plan_time, solution_eps, environment = perform_single_planning(
         planner_name='arastar',
         footprint=footprint,
         motion_primitives=motion_primitives,
         forward_search=True,
         costmap=costmap,
-        start_pose=np.array([5., 4.37, 0.]),
-        goal_pose=np.array([5., 5.7, 0.]),
+        start_pose=start_pose,
+        goal_pose=goal_pose,
         target_v=0.65,
         target_w=1.0,
         allocated_time=np.inf,
         cost_scaling_factor=40.,
-        debug=True)
+        debug=False)
+
+    if debug:
+
+        print(environment.xytheta_real_to_cell(start_pose))
+        print(environment.xytheta_real_to_cell(goal_pose))
+
+        print(plan_xytheta_cell)
+        print("done with the solution of size=%d and sol. eps=%f" % (len(plan_xytheta_cell), solution_eps))
+        print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
+
+        params = environment.get_params()
+        costmap = environment.get_costmap()
+        img = prepare_canvas(costmap.shape)
+        draw_world_map(img, costmap)
+        for pose in plan_xytheta:
+            draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
+                       color=70, color_axis=(1, 2))
+        draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
+        draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
+        draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))
+        magnify = 16
+        img = cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST)
+        cv2.imshow("planning result", img)
+        cv2.waitKey(-1)
 
 
 if __name__ == '__main__':
-    box_planning()
+    box_planning(debug=True)

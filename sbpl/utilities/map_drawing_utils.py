@@ -5,7 +5,7 @@ from __future__ import division
 import cv2
 import numpy as np
 from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.path_tools import world_to_pixel, pixel_to_world, get_pixel_footprint, blit
+from sbpl.utilities.path_tools import world_to_pixel_floor, pixel_to_world, get_pixel_footprint, blit
 
 
 """
@@ -29,7 +29,7 @@ def get_drawing_coordinates_from_physical(map_shape, resolution, origin, physica
     assert physical_coords.shape[physical_coords.ndim - 1] == 2
     assert np.array(map_shape).ndim == 1
 
-    pixel_coords = world_to_pixel(physical_coords, origin, resolution)
+    pixel_coords = world_to_pixel_floor(physical_coords, origin, resolution)
     # flip the y because we flip image for display
     pixel_coords[..., 1] = map_shape[0] - 1 - pixel_coords[..., 1]
 
@@ -101,8 +101,8 @@ def _mark_wall_on_static_map(static_map, p0, p1, width, color):
     thickness = max(1, int(width/static_map.get_resolution()))
     cv2.line(
         static_map.get_data(),
-        tuple(world_to_pixel(np.array(p0), static_map.get_origin(), static_map.get_resolution())),
-        tuple(world_to_pixel(np.array(p1), static_map.get_origin(), static_map.get_resolution())),
+        tuple(world_to_pixel_floor(np.array(p0), static_map.get_origin(), static_map.get_resolution())),
+        tuple(world_to_pixel_floor(np.array(p1), static_map.get_origin(), static_map.get_resolution())),
         color=color,
         thickness=thickness)
 

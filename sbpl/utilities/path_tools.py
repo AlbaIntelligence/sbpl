@@ -125,7 +125,7 @@ def get_pixel_footprint(angle, robot_footprint, map_resolution, fill=True):
     return kernel
 
 
-def world_to_pixel(world_coords, origin, resolution):
+def world_to_pixel_floor(world_coords, origin, resolution):
     """
     Convert a numpy set of world coordinates (... x 2 numpy array)
     to pixel coordinates, given origin ((x, y) in world coordinates)
@@ -145,7 +145,7 @@ def world_to_pixel(world_coords, origin, resolution):
     if not isinstance(origin, np.ndarray):
         origin = np.asarray(origin)
     assert world_coords.shape[world_coords.ndim - 1] == 2
-    return np.round((world_coords - origin) / resolution).astype(np.int)
+    return np.floor((world_coords - origin) / resolution).astype(np.int)
 
 
 def pixel_to_world(pixel_coords, origin, resolution):

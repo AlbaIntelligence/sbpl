@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 import numpy as np
-from sbpl.utilities.path_tools import world_to_pixel, pixel_to_world
+from sbpl.utilities.path_tools import world_to_pixel_floor, pixel_to_world
 
 
 CURRENT_ENCODING_VERSION = 1
@@ -42,7 +42,7 @@ class CostMap2D(object):
         :param dtype: Data type for costmap
         :return: A CostMap2D object
         """
-        pixel_size = world_to_pixel(world_size, (0, 0), resolution)
+        pixel_size = world_to_pixel_floor(world_size, (0, 0), resolution)
         data = np.zeros(pixel_size[::-1], dtype=dtype)
         return CostMap2D(data, resolution, np.asarray(world_origin, dtype=np.float64))
 
@@ -95,7 +95,7 @@ class CostMap2D(object):
         :param world_coords: either a n-elem numpy array [x, y] or a n x 2 array with n points
         :return: same as input, but in pixel coordinates.
         """
-        return world_to_pixel(world_coords, self._origin, self._resolution)
+        return world_to_pixel_floor(world_coords, self._origin, self._resolution)
 
     def pixel_to_world(self, pixel_coords):
         """
