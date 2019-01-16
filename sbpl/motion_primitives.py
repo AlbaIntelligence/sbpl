@@ -7,8 +7,9 @@ import numpy as np
 import os
 import cv2
 
+from sbpl.utilities.costmap_2d_python import freeze_array
 from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_arrow
-from sbpl.utilities.path_tools import pixel_to_world, angle_discrete_to_cont
+from sbpl.utilities.path_tools import pixel_to_world, angle_discrete_to_cont, normalize_angle
 
 
 def mprim_folder():
@@ -30,6 +31,41 @@ class MotionPrimitives(object):
 
     def get_number_of_angles(self):
         return self._number_of_angles
+
+
+class MotionPrimitive(object):
+    """Python implementation of motion primitives.
+    SBPL-generated primitives are wrapped with cpp SBPL_xytheta_mprimitiveWrapper that has the same interface"""
+    def __init__(self, primitive_id, start_theta_discrete, action_cost_multiplier,
+                 end_cell, intermediate_states):
+        self._id = primitive_id
+        self._start_theta_discrete = start_theta_discrete
+        self._action_cost_multiplier = action_cost_multiplier
+        self._end_cell = freeze_array(np.array(end_cell))
+        self._intermediate_states = freeze_array(np.array(intermediate_states))
+
+    @property
+    def motprimID(self):
+        return self._id
+
+    @property
+    def starttheta_c(self):
+        return self._start_theta_discrete
+
+    @property
+    def additionalactioncostmult(self):
+        return self._action_cost_multiplier
+
+    @property
+    def endcell(self):
+        return self._end_cell
+
+    @property
+    def turning_radius(self):
+        raise NotImplementedError("Turning radius is for non-uniform angles which are not implemented")
+
+    def get_intermediate_states(self):
+        return self._intermediate_states
 
 
 def load_motion_pritimives(mprim_filename):
@@ -63,6 +99,19 @@ def load_motion_pritimives(mprim_filename):
 
 
 def check_motion_primitives(motion_primitives):
+
+    # check that intermediate states start at 0 with proper orientation
+    for p in motion_primitives.get_primitives():
+        first_state = p.get_intermediate_states()[0]
+        print(first_state)
+        assert first_state[0] == 0
+        assert first_state[1] == 0
+        np.testing.assert_almost_equal(
+            angle_discrete_to_cont(p.starttheta_c, motion_primitives.get_number_of_angles()),
+            first_state[2],
+            decimal=4
+        )
+
     angle_to_primitive = {}
     for p in motion_primitives.get_primitives():
         try:
@@ -166,7 +215,68 @@ def assert_motion_primitives_equal(motion_primitives_0, motion_primitives_1):
         np.testing.assert_almost_equal(p0.get_intermediate_states(), p1.get_intermediate_states(), decimal=4)
 
 
+def linear_intermediate_states(
+        start_theta_discrete, endcell, number_of_intermediate_states, resolution, number_of_angles):
+    assert number_of_intermediate_states >= 2, "There has to be at least start and final state"
+    angle_bin_size = 2 * np.pi / number_of_angles
+    interpolation = np.arange(number_of_intermediate_states)/(number_of_intermediate_states-1)
+    start_angle = normalize_angle(start_theta_discrete*angle_bin_size)
+    end_angle = normalize_angle(endcell[2]*angle_bin_size)
+    angle_diff = normalize_angle(end_angle - start_angle)
+
+    states = np.array([
+        interpolation * endcell[0] * resolution,
+        interpolation * endcell[1] * resolution,
+        normalize_angle(start_angle + interpolation*angle_diff)
+    ]).T
+    return np.ascontiguousarray(states)
+
+
+def create_linear_primitive(
+        primitive_id,
+        start_theta_discrete,
+        action_cost_multiplier,
+        end_cell,
+        number_of_intermediate_states,
+        resolution,
+        number_of_angles):
+
+    return MotionPrimitive(
+        primitive_id=primitive_id,
+        start_theta_discrete=start_theta_discrete,
+        action_cost_multiplier=action_cost_multiplier,
+        end_cell=end_cell,
+        intermediate_states=linear_intermediate_states(
+            start_theta_discrete, end_cell, number_of_intermediate_states, resolution, number_of_angles
+        ))
+
 
 if __name__ == '__main__':
-    mprimtives = load_motion_pritimives(os.path.join(mprim_folder(), 'custom/gtx_32_10.mprim'))
-    debug_motion_primitives(mprimtives)
+    # mprimtives = load_motion_pritimives(os.path.join(mprim_folder(), 'custom/gtx_32_10.mprim'))
+
+    start_theta_discrete = 0
+    number_of_intermediate_states = 3
+    resolution = 0.1
+    number_of_angles = 1
+    batch = []
+    action_cost_multiplier = 1
+    for i, end_cell in enumerate([[1, 0, 0],
+                                  [0, 1, 0],
+                                  [-1, 0, 0],
+                                  [0, -1, 0]]):
+        batch.append(create_linear_primitive(
+            primitive_id=i,
+            start_theta_discrete=start_theta_discrete,
+            action_cost_multiplier=action_cost_multiplier,
+            end_cell=end_cell,
+            number_of_intermediate_states=number_of_intermediate_states,
+            resolution=resolution,
+            number_of_angles=number_of_angles))
+
+    motion_primitives = MotionPrimitives(
+        resolution=0.1,
+        number_of_angles=1,
+        mprim_list=batch
+    )
+
+    debug_motion_primitives(motion_primitives)
