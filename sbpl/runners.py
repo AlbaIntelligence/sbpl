@@ -95,8 +95,8 @@ def planandnavigatexythetalat(environment_config, motion_primitives, planner_nam
 
         print("new planning...")
         plan_xytheta, plan_xytheta_cell, plan_time, solution_eps = planner.replan(env, allocated_time=10.)
-        print("done with the solution of size=%d and sol. eps=%f", len(plan_xytheta_cell), solution_eps)
-        print("actual path (with intermediate poses) size=%d", len(plan_xytheta))
+        print("done with the solution of size=%d and sol. eps=%f" % (len(plan_xytheta_cell), solution_eps))
+        print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
 
         if len(plan_xytheta_cell):
             # move until we move into the end of motion primitive

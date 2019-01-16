@@ -1,7 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
-import _sbpl_module
+import sbpl._sbpl_module
 
 import numpy as np
 import os
@@ -45,7 +45,7 @@ def load_motion_pritimives(mprim_filename):
             raise AssertionError("Invalid number of angles entry")
         number_of_angles = int(l1[len('numberofangles: '):])
 
-    params = _sbpl_module.EnvNAVXYTHETALAT_InitParms()
+    params = sbpl._sbpl_module.EnvNAVXYTHETALAT_InitParms()
     params.size_x = 1
     params.size_y = 1
     params.numThetas = number_of_angles
@@ -58,7 +58,7 @@ def load_motion_pritimives(mprim_filename):
     params.goaly = 0
     params.goaltheta = 0
     empty_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
-    env = _sbpl_module.EnvironmentNAVXYTHETALAT(np.array([[0., 0.]]), mprim_filename, empty_map, params)
+    env = sbpl._sbpl_module.EnvironmentNAVXYTHETALAT(np.array([[0., 0.]]), mprim_filename, empty_map, params)
     return MotionPrimitives(resolution, number_of_angles, env.get_motion_primitives_list())
 
 
