@@ -743,13 +743,17 @@ bool EnvironmentNAVXYTHETALATTICE::ReadinMotionPrimitive(
         endtheta_c != pMotPrim->endcell.theta)
     {
         SBPL_ERROR( "ERROR: incorrect primitive %d with startangle=%d "
-                   "last interm point %f %f %f does not match end pose %d %d %d\n",
+                   "last interm point %f %f %f does not match end pose %d %d %d (it falls into %d %d %d, "
+                   "sourcepose=%f %f %f )\n",
                    pMotPrim->motprimID, pMotPrim->starttheta_c,
                    pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].x,
                    pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].y,
                    pMotPrim->intermptV[pMotPrim->intermptV.size() - 1].theta,
                    pMotPrim->endcell.x, pMotPrim->endcell.y,
-                   pMotPrim->endcell.theta);
+                   pMotPrim->endcell.theta,
+                   endx_c, endy_c, endtheta_c,
+                   sourcepose.x, sourcepose.y, sourcepose.theta
+                   );
         SBPL_FFLUSH(stdout);
         return false;
     }
@@ -1266,7 +1270,7 @@ void EnvironmentNAVXYTHETALATTICE::InitializeEnvConfig(std::vector<SBPL_xytheta_
 #endif
 
     if (motionprimitiveV == NULL) {
-        throw SBPL_Exception("Motion primitive is NULL");
+        // throw SBPL_Exception("Motion primitive is NULL");
     }
     else {
         PrecomputeActionswithCompleteMotionPrimitive(motionprimitiveV);

@@ -9,7 +9,7 @@ import cv2
 
 from sbpl.utilities.costmap_2d_python import freeze_array
 from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_arrow
-from sbpl.utilities.path_tools import pixel_to_world, angle_discrete_to_cont, normalize_angle
+from sbpl.utilities.path_tools import pixel_to_world_centered, angle_discrete_to_cont, normalize_angle
 
 
 def mprim_folder():
@@ -152,7 +152,7 @@ def debug_motion_primitives(motion_primitives):
             else:
                 turn_in_place = ''
             print(turn_in_place, p.endcell, p.get_intermediate_states()[0], p.get_intermediate_states()[-1])
-            final_float_state = pixel_to_world(p.endcell[:2], np.zeros((2,)), motion_primitives.get_resolution())
+            final_float_state = pixel_to_world_centered(p.endcell[:2], np.zeros((2,)), motion_primitives.get_resolution())
             final_float_angle = angle_discrete_to_cont(p.endcell[2], motion_primitives.get_number_of_angles())
             try:
                 np.testing.assert_array_almost_equal(final_float_state, p.get_intermediate_states()[-1][:2])
@@ -249,6 +249,41 @@ def create_linear_primitive(
         intermediate_states=linear_intermediate_states(
             start_theta_discrete, end_cell, number_of_intermediate_states, resolution, number_of_angles
         ))
+
+
+def exhaustive_geometric_primitives(resolution, number_of_intermediate_states, number_of_angles):
+    batch = []
+    action_cost_multiplier = 1
+
+    def normalize_theta_cell(theta_c):
+        if theta_c > number_of_angles:
+            return normalize_theta_cell(theta_c - number_of_angles)
+        elif theta_c < 0:
+            return normalize_theta_cell(theta_c + number_of_angles)
+        return theta_c
+
+    for start_theta_discrete in range(number_of_angles):
+        for i, end_cell in enumerate([[1, 0, start_theta_discrete],
+                                      [0, 1, start_theta_discrete],
+                                      [-1, 0, start_theta_discrete],
+                                      [0, -1, start_theta_discrete],
+                                      [0, 0, normalize_theta_cell(start_theta_discrete+1)],
+                                      [0, 0, normalize_theta_cell(start_theta_discrete-1)]]):
+            batch.append(create_linear_primitive(
+                primitive_id=i,
+                start_theta_discrete=start_theta_discrete,
+                action_cost_multiplier=action_cost_multiplier,
+                end_cell=end_cell,
+                number_of_intermediate_states=number_of_intermediate_states,
+                resolution=resolution,
+                number_of_angles=number_of_angles))
+
+    return MotionPrimitives(
+        resolution=resolution,
+        number_of_angles=number_of_angles,
+        mprim_list=batch
+    )
+
 
 
 if __name__ == '__main__':

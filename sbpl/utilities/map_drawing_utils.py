@@ -5,7 +5,7 @@ from __future__ import division
 import cv2
 import numpy as np
 from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.path_tools import world_to_pixel_floor, pixel_to_world, get_pixel_footprint, blit
+from sbpl.utilities.path_tools import world_to_pixel_floor, get_pixel_footprint, blit
 
 
 """
@@ -46,19 +46,6 @@ def get_drawing_angle_from_physical(angle):
     :return: angle in radians to draw with
     '''
     return -angle
-
-
-def get_physical_coords_from_drawing(map_shape, resolution, origin, drawing_coords):
-    '''
-    Inverse of the get_drawing_coordinates_from_physical function
-    '''
-    # this makes a copy to make sure that we do not change original coords
-    drawing_coords = np.array(drawing_coords)
-    assert drawing_coords.ndim <= 2
-    assert drawing_coords.shape[drawing_coords.ndim - 1] == 2
-    assert np.array(map_shape).ndim == 1
-    drawing_coords[..., 1] = map_shape[0] - 1 - drawing_coords[..., 1]
-    return pixel_to_world(drawing_coords, origin, resolution)
 
 
 def get_physical_angle_from_drawing(angle):

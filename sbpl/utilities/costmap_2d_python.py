@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 import numpy as np
-from sbpl.utilities.path_tools import world_to_pixel_floor, pixel_to_world
+from sbpl.utilities.path_tools import world_to_pixel_floor
 
 
 CURRENT_ENCODING_VERSION = 1
@@ -87,25 +87,6 @@ class CostMap2D(object):
         '''
         xmin, xmax, ymin, ymax = self.world_bounds()
         return np.array([xmax+xmin, ymax+ymin])*0.5
-
-    def world_to_pixel(self, world_coords):
-        """
-        Convert world coordinates to map pixel coordinates
-        Note that this does not check whether the converted coordinate
-        :param world_coords: either a n-elem numpy array [x, y] or a n x 2 array with n points
-        :return: same as input, but in pixel coordinates.
-        """
-        return world_to_pixel_floor(world_coords, self._origin, self._resolution)
-
-    def pixel_to_world(self, pixel_coords):
-        """
-        Convert map pixel coordinates to world coordinates
-        Note that this does not check whether the coordinates
-        are in bounds.
-        :param pixel_coords: either a n-elem numpy array [x, y] or a n x 2 array with n points
-        :return: same as input, but in world coordinates
-        """
-        return pixel_to_world(pixel_coords, self._origin, self._resolution)
 
     def get_state(self):
         return dict(
