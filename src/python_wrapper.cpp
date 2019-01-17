@@ -30,19 +30,6 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 
-
-//struct SBPL_xytheta_mprimitive
-//{
-//    int motprimID;
-//    unsigned char starttheta_c;
-//    int additionalactioncostmult;
-//    sbpl_xy_theta_cell_t endcell;
-//    double turning_radius;
-//    //intermptV start at 0,0,starttheta and end at endcell in continuous
-//    //domain with half-bin less to account for 0,0 start
-//    std::vector<sbpl_xy_theta_pt_t> intermptV;
-//};
-
 class SBPL_xytheta_mprimitiveWrapper {
 public:
     SBPL_xytheta_mprimitiveWrapper(const SBPL_xytheta_mprimitive& motion_primitive)
