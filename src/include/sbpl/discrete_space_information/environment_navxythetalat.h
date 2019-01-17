@@ -84,8 +84,9 @@ struct EnvNAVXYTHETALATHashEntry_t
     int stateID;
     int X;
     int Y;
-    char Theta;
+    int Theta;
     int iteration;
+
 };
 
 struct SBPL_xytheta_mprimitive

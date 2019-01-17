@@ -2692,13 +2692,19 @@ EnvironmentNAVXYTHETALAT::GetHashEntry_hash(int X, int Y, int Theta)
 EnvNAVXYTHETALATHashEntry_t*
 EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup(int X, int Y, int Theta)
 {
+
+    if (X < 0 || Y < 0) {
+        throw SBPL_Exception("Invalid negative cell coordinate");
+    }
+
+    if (Theta < 0) {
+        throw SBPL_Exception("Invalid negative cell angle");
+    }
     int i;
 
 #if TIME_DEBUG
     clock_t currenttime = clock();
 #endif
-
-    SBPL_PRINTF("1 %d %d %d", X, Y, Theta);
 
     EnvNAVXYTHETALATHashEntry_t* HashEntry = new EnvNAVXYTHETALATHashEntry_t;
 
@@ -2709,6 +2715,8 @@ EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup(int X, int Y, int Theta)
 
     HashEntry->stateID = StateID2CoordTable.size();
 
+    SBPL_PRINTF("Created hash entry %d %d %d %d", HashEntry->X, HashEntry->Y, HashEntry->Theta, Theta);
+
     // insert into the tables
     StateID2CoordTable.push_back(HashEntry);
 
@@ -2716,18 +2724,12 @@ EnvironmentNAVXYTHETALAT::CreateNewHashEntry_lookup(int X, int Y, int Theta)
 
     int maxsize = EnvNAVXYTHETALATCfg.EnvWidth_c * EnvNAVXYTHETALATCfg.EnvHeight_c * EnvNAVXYTHETALATCfg.NumThetaDirs;
 
-    SBPL_PRINTF("2 %d %d", index, maxsize);
-
 #if DEBUG
     if (Coord2StateIDHashTable_lookup[index] != NULL) {
         throw SBPL_Exception("ERROR: creating hash entry for non-NULL hashentry");
     }
 #endif
-    SBPL_PRINTF("3 %d %d", index, maxsize);
-
     Coord2StateIDHashTable_lookup[index] = HashEntry;
-
-    SBPL_PRINTF("4 %d %d", HashEntry->stateID, StateID2IndexMapping.size());
 
     // insert into and initialize the mappings
     int* entry = new int[NUMOFINDICES_STATEID2IND];
