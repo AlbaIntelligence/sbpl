@@ -107,7 +107,7 @@ def check_motion_primitives(motion_primitives):
         assert first_state[1] == 0
         np.testing.assert_almost_equal(
             angle_discrete_to_cont(p.starttheta_c, motion_primitives.get_number_of_angles()),
-            first_state[2],
+            normalize_angle(first_state[2]),
             decimal=4
         )
 
@@ -119,7 +119,8 @@ def check_motion_primitives(motion_primitives):
             angle_to_primitive[p.starttheta_c] = [p]
 
     # every angle has the same number of primitives
-    assert np.all(len(angle_to_primitive.values()[0]) == np.array([len(v) for v in angle_to_primitive.values()]))
+    motion_primitive_lenghts = np.array([len(v) for v in angle_to_primitive.values()])
+    assert np.all(len(angle_to_primitive.values()[0]) == motion_primitive_lenghts)
     assert set(angle_to_primitive.keys()) == set(range(len(angle_to_primitive)))
 
     # angles are ordered
@@ -137,10 +138,10 @@ def check_motion_primitives(motion_primitives):
 def debug_motion_primitives(motion_primitives):
     angle_to_primitive = check_motion_primitives(motion_primitives)
 
-    all_angles = np.arange(motion_primitives.get_number_of_angles())*np.pi*2/motion_primitives.get_number_of_angles()
-    print(all_angles)
-    print(np.degrees(all_angles))
-    print(np.degrees(0.6654))
+    all_angles = normalize_angle(
+        np.arange(motion_primitives.get_number_of_angles())*np.pi*2/motion_primitives.get_number_of_angles())
+    print('All angles: %s' % all_angles)
+    print('(in degrees: %s)'% np.degrees(all_angles))
 
     for angle_c, primitives in angle_to_primitive.items():
         print('------', angle_c)
