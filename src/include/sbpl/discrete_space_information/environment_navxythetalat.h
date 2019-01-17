@@ -62,11 +62,11 @@ class SBPL2DGridSearch;
 
 struct EnvNAVXYTHETALATAction_t
 {
-    unsigned char aind; //index of the action (unique for given starttheta)
-    char starttheta;
-    char dX;
-    char dY;
-    char endtheta;
+    unsigned int aind; //index of the action (unique for given starttheta)
+    int starttheta;
+    int dX;
+    int dY;
+    int endtheta;
     unsigned int cost;
     std::vector<sbpl_2Dcell_t> intersectingcellsV;
     //start at 0,0,starttheta and end at endcell in continuous domain with half-bin less to account for 0,0 start
@@ -499,9 +499,7 @@ protected:
                                   const std::vector<sbpl_2Dpt_t> & robot_perimeterV);
 
     virtual bool InitGeneral(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
-    virtual void PrecomputeActionswithBaseMotionPrimitive(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
     virtual void PrecomputeActionswithCompleteMotionPrimitive(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
-    virtual void DeprecatedPrecomputeActions();
 
     virtual void InitializeEnvironment() = 0;
 
