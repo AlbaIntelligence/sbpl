@@ -50,7 +50,7 @@ public:
     { }
 
     int get_motprimID() const {return _primitive.motprimID;};
-    unsigned char get_start_theta_cell() const {return _primitive.starttheta_c;};
+    int get_start_theta_cell() const {return _primitive.starttheta_c;};
     int get_additionalactioncostmult() const {return _primitive.additionalactioncostmult;};
 
     double get_turning_radius() const {return _primitive.turning_radius;};

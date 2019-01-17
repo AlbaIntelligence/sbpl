@@ -91,7 +91,7 @@ struct EnvNAVXYTHETALATHashEntry_t
 struct SBPL_xytheta_mprimitive
 {
     int motprimID;
-    unsigned char starttheta_c;
+    int starttheta_c;
     int additionalactioncostmult;
     sbpl_xy_theta_cell_t endcell;
     double turning_radius;

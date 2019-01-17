@@ -64,16 +64,11 @@ def perform_single_planning(
     params.goaly = 0
     params.goaltheta = 0
 
-    primitives_folder = tempfile.mkdtemp()
-    dump_motion_primitives(motion_primitives, os.path.join(primitives_folder, 'primitives.mprim'))
-
     environment = EnvironmentNAVXYTHETALAT(
         footprint,
-        os.path.join(primitives_folder, 'primitives.mprim'),
+        motion_primitives,
         inflated_costmap.get_data(),
         params)
-
-    shutil.rmtree(primitives_folder)
 
     planner = create_planner(planner_name, environment, forward_search)
 

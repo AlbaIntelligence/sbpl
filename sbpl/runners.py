@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 
 from sbpl.environments import EnvironmentNAVXYTHETALAT
-from sbpl.motion_primitives import mprim_folder
+from sbpl.motion_primitives import mprim_folder, load_motion_pritimives
 from sbpl.planners import create_planner
 from sbpl.utilities.costmap_2d_python import CostMap2D
 
@@ -25,7 +25,7 @@ def planandnavigatexythetalat(environment_config, motion_primitives, planner_nam
     """
     Python port of planandnavigatexythetalat from sbpl test/main.cpp
     """
-    true_env = EnvironmentNAVXYTHETALAT(environment_config)
+    true_env = EnvironmentNAVXYTHETALAT.create_from_config(environment_config)
     params = true_env.get_params()
     cost_obstacle, cost_inscribed, cost_possibly_circum = true_env.get_cost_thresholds()
     true_costmap = true_env.get_costmap()
@@ -130,6 +130,6 @@ if __name__ == '__main__':
     planandnavigatexythetalat(
         environment_config=os.path.join(env_examples_folder(), 'nav3d/env1.cfg'),
         # environment_config=os.path.join(env_examples_folder(), 'nav3d/willow-25mm-inflated-env.cfg'),
-        motion_primitives=os.path.join(mprim_folder(), 'pr2.mprim'),
+        motion_primitives=load_motion_pritimives(os.path.join(mprim_folder(), 'pr2.mprim')),
         planner_name='adstar'
     )

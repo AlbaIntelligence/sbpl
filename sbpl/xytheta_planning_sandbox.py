@@ -14,7 +14,7 @@ from sbpl.utilities.map_drawing_utils import add_wall_to_static_map, draw_trajec
 def box_planning(debug):
     costmap = CostMap2D.create_empty((4, 4), 0.2, np.zeros((2,)))
 
-    gap = 1.0
+    gap = 1.2
     add_wall_to_static_map(costmap, (0, 2), (2, 2), width=0.0)
     add_wall_to_static_map(costmap, (2+gap, 2), (4, 2), width=0.0)
 
