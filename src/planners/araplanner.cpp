@@ -438,7 +438,7 @@ int ARAPlanner::ImprovePath(ARASearchStateSpace_t* pSearchStateSpace, double Max
     }
 
     if (minkey.key[0] > INFINITECOST) {
-        SBPL_PRINTF(SBPL_LEVEL_ERROR, "ERROR in ImprovePath: cost overflow\n");
+        SBPL_ERROR("ERROR in ImprovePath: cost overflow\n");
     }
 
     int retv = 1;
