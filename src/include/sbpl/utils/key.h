@@ -31,8 +31,7 @@
 #define __KEY_H_
 
 #define KEY_SIZE 2
-
-#define INFINITECOST 2000000000
+#define INFINITECOST 2147000000
 
 class CKey
 {

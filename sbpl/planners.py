@@ -85,9 +85,6 @@ def perform_single_planning(
         environment, allocated_time=allocated_time)
 
     if debug:
-        print(environment.xytheta_real_to_cell(start_pose), environment.xytheta_real_to_cell(goal_pose))
-        print(plan_xytheta_cell)
-
         print(start_pose, plan_xytheta)
         print("done with the solution of size=%d and sol. eps=%f" % (len(plan_xytheta_cell), solution_eps))
         print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
@@ -102,7 +99,7 @@ def perform_single_planning(
         draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
         draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
         draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))
-        magnify = 4
+        magnify = 2
         img = cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST)
         cv2.imshow("planning result", img)
         cv2.waitKey(-1)

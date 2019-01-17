@@ -20,7 +20,6 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
         primitives_folder = tempfile.mkdtemp()
         try:
             dump_motion_primitives(motion_primitives, os.path.join(primitives_folder, 'primitives.mprim'))
-            print(os.path.join(primitives_folder, 'primitives.mprim'))
             sbpl._sbpl_module.EnvironmentNAVXYTHETALAT.__init__(
                 self,
                 footprint,
@@ -28,8 +27,7 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
                 costmap_data,
                 env_params)
         finally:
-            pass
-            # shutil.rmtree(primitives_folder)
+            shutil.rmtree(primitives_folder)
 
     @staticmethod
     def create_from_config(environment_config_filename):

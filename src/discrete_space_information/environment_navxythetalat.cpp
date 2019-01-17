@@ -2541,7 +2541,7 @@ int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad)
 
     if (!IsValidConfiguration(x, y, theta)) {
         SBPL_PRINTF("WARNING: goal configuration is invalid\n");
-        // return -1;
+        return -1;
     }
 
     EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
