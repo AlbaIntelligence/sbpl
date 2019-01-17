@@ -71,7 +71,7 @@ def _pixel_distance_to_cost(distance, resolution, inscribed_rad, cost_scaling_fa
     # ros conventions
     inscribed_cost = CostMap2D.INSCRIBED_INFLATED_OBSTACLE
     lethal_cost = CostMap2D.LETHAL_OBSTACLE
-    costs = np.empty(distance.shape, dtype=np.uint8)
+    costs = np.zeros(distance.shape, dtype=np.uint8)
     costs[other] = (inscribed_cost - 1) * np.exp(-pixel_scaling_factor * (distance[other] - pixel_inscribed_radius))
     costs[inscribed] = inscribed_cost
     costs[lethal] = lethal_cost
