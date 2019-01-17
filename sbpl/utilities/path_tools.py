@@ -322,7 +322,7 @@ def angle_discrete_to_cont(angle_cell, num_angles):
     :return: discrete angle
     '''
     bin_size = 2*np.pi/num_angles
-    return angle_cell*bin_size
+    return normalize_angle(angle_cell*bin_size)
 
 
 def path_velocity(path):
