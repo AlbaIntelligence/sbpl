@@ -194,7 +194,7 @@ def pixel_to_world_centered(pixel_coords, origin, resolution):
     '''
     pixel_coords = np.asarray(pixel_coords)
     assert pixel_coords.shape[pixel_coords.ndim - 1] == 2
-    return pixel_coords.astype(np.float32) * resolution + np.array(origin, dtype=np.float32) + resolution*0.5
+    return pixel_coords.astype(np.float64) * resolution + np.array(origin, dtype=np.float64) + resolution*0.5
 
 
 
