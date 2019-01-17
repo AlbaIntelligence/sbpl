@@ -1173,6 +1173,12 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
             }
 
             aind++;
+
+            if (aind >= EnvNAVXYTHETALATCfg.actionwidth) {
+                SBPL_ERROR("Too many primitives start with the same angle %d!", motionprimitiveV->at(mind).starttheta_c);
+                throw SBPL_Exception("Too many primitives start with the same angle!");
+            }
+
             numofactions++;
 
             // action index
