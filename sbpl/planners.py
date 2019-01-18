@@ -89,7 +89,7 @@ def perform_single_planning(
         environment, allocated_time=allocated_time)
 
     if debug:
-        print("done with the solution of size=%d and sol. eps=%f" % (len(plan_xytheta_cell), solution_eps))
+        print("done with the solution of size=%d and sol. eps=%f in %ss" % (len(plan_xytheta_cell), solution_eps, plan_time))
         print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
 
         # angle_to_primitive = {}
