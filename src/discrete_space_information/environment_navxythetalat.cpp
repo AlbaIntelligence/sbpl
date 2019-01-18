@@ -2307,17 +2307,13 @@ int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad)
     }
 
     if (!IsValidConfiguration(x, y, theta)) {
-        SBPL_PRINTF("WARNING: goal configuration is invalid\n");
+        SBPL_ERROR("IsValidConfiguration=false: goal configuration is invalid: %d %d %d\n", x, y, theta);
         return -1;
     }
 
     EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
     if ((OutHashEntry = (this->*GetHashEntry)(x, y, theta)) == NULL) {
         // have to create a new entry
-                    if (theta < 0) {
-                throw SBPL_Exception("6");
-            }
-
         OutHashEntry = (this->*CreateNewHashEntry)(x, y, theta);
     }
 
@@ -2354,18 +2350,13 @@ int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad)
     SBPL_PRINTF("env: setting start to %.3f %.3f %.3f (%d %d %d)\n", x_m, y_m, theta_rad, x, y, theta);
 
     if (!IsValidConfiguration(x, y, theta)) {
-        SBPL_PRINTF("WARNING: start configuration %d %d %d is invalid\n", x, y, theta);
+        SBPL_ERROR("IsValidConfiguration=false: start configuration %d %d %d is invalid\n", x, y, theta);
         return -1;
     }
 
     EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
     if ((OutHashEntry = (this->*GetHashEntry)(x, y, theta)) == NULL) {
         // have to create a new entry
-
-                    if (theta < 0) {
-                throw SBPL_Exception("7");
-            }
-
         OutHashEntry = (this->*CreateNewHashEntry)(x, y, theta);
     }
 
