@@ -106,9 +106,15 @@ def perform_single_planning(
         trajectory_through_primitives = np.array([start_pose])
         for angle_id, motor_prim_id in actions:
             primitive = angle_to_primitive[angle_id][motor_prim_id]
-            states = primitive.get_intermediate_states().copy()
 
-            pose = np.array([0., 0., states[0, 2]])
+            # angle = primitive.get_intermediate_states()[0, 2]
+            angle = trajectory_through_primitives[-1, 2]
+
+            print(np.degrees(trajectory_through_primitives[-1, 2]),
+                  np.degrees(primitive.get_intermediate_states()[0, 2]))
+            pose = np.array([trajectory_through_primitives[-1, 0],
+                             trajectory_through_primitives[-1, 1],
+                             angle])
             dt = 0.1
             states_through_control = np.array([pose])
             for c in primitive.get_control_signals():
@@ -119,8 +125,7 @@ def perform_single_planning(
                     dt=dt)
                 states_through_control = np.vstack((states_through_control, [pose]))
 
-            states[:, :2] += trajectory_through_primitives[-1, :2]
-            trajectory_through_primitives = np.vstack((trajectory_through_primitives, states))
+            trajectory_through_primitives = np.vstack((trajectory_through_primitives, states_through_control))
 
         # dt = 0.1
         # pose = start_pose
