@@ -23,6 +23,15 @@ class MotionPrimitives(object):
         self._resolution = resolution
         self._number_of_angles = number_of_angles
 
+        self._angle_to_primitive = {}
+        for p in self._primitives:
+            try:
+                angle_primitives = self._angle_to_primitive[p.starttheta_c]
+            except KeyError:
+                angle_primitives = {}
+                self._angle_to_primitive[p.starttheta_c] = angle_primitives
+            angle_primitives[p.motprimID] = p
+
     def get_primitives(self):
         return self._primitives
 
@@ -31,6 +40,9 @@ class MotionPrimitives(object):
 
     def get_number_of_angles(self):
         return self._number_of_angles
+
+    def find_primitive(self, angle_id, primitive_id):
+        return self._angle_to_primitive[angle_id][primitive_id]
 
 
 class MotionPrimitive(object):
