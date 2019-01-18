@@ -20,9 +20,9 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         footprint_scale):
 
     test_map = CostMap2D(
-        data=np.zeros((40, 17), dtype=np.uint8),
+        data=np.zeros((20, 8), dtype=np.uint8),
         origin=np.array([0., 0.]),
-        resolution=0.1
+        resolution=0.2
     )
     test_map.get_data()[:] = 0
     print(test_map.get_origin(), test_map.get_data().shape)
@@ -34,11 +34,12 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         target_v=target_v,
         target_w=target_w,
         w_samples_in_each_direction=w_samples_in_each_direction,
-        primitives_duration=primitives_duration
+        primitives_duration=primitives_duration,
+        refine_dt=0.1
     )
 
     add_wall_to_static_map(test_map, (0.07828677, 2.25250846), (0.07828677, 3.95250846))
-    add_wall_to_static_map(test_map, (1.07828677, 2.15250846), (1.47828677, 2.15250846))
+    add_wall_to_static_map(test_map, (1.27828677, 2.15250846), (2.97828677, 2.15250846))
 
     start_pose = np.array([0.9818883, 3.52881533, -np.pi/2])
     goal_pose = np.array([0.97828677, 1.56319919, -np.pi/2])
@@ -64,8 +65,8 @@ if __name__ == '__main__':
     run_sbpl_motiont_primitive_planning_benchmark(
         target_v=0.65,
         target_w=1.0,
-        number_of_angles=32,
-        w_samples_in_each_direction=2,
-        primitives_duration=5,
+        number_of_angles=4,
+        w_samples_in_each_direction=1,
+        primitives_duration=2,
         footprint_scale=1.8
     )

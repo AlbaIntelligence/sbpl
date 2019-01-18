@@ -310,7 +310,7 @@ def exhaustive_geometric_primitives(resolution, number_of_intermediate_states, n
 
 def forward_model_diffdrive_motion_primitives(
         resolution, number_of_angles, target_v, target_w, w_samples_in_each_direction,
-        primitives_duration):
+        primitives_duration, refine_dt=0.05):
 
     def forward_model(pose, state, dt, control_signals):
         new_pose = kinematic_body_pose_motion_step(
@@ -322,8 +322,6 @@ def forward_model_diffdrive_motion_primitives(
         next_state[:, 0] = control_signals[:, 0]
         next_state[:, 1] = control_signals[:, 1]
         return new_pose, next_state
-
-    refine_dt = 0.05
 
     pose_evolution, state_evolution, control_evolution, refine_dt, control_costs = control_choices_diff_drive_exhaustive(
         max_v=target_v,
