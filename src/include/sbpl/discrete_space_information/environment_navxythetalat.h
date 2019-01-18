@@ -74,8 +74,8 @@ struct EnvNAVXYTHETALATAction_t
     //start at 0,0,starttheta and end at endcell in discrete domain
     std::vector<sbpl_xy_theta_cell_t> interm3DcellsV;
 
- int motprimID;
- double turning_radius;
+    int motprimID;
+    double turning_radius;
 
 };
 

@@ -1081,6 +1081,8 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
 
             // action index
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].aind = aind;
+            // Motor prim id
+            EnvNAVXYTHETALATCfg.ActionsV[tind][aind].motprimID = motionprimitiveV->at(mind).motprimID;
 
             // start angle
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].starttheta = tind;
@@ -1189,11 +1191,6 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
             int targettheta = EnvNAVXYTHETALATCfg.ActionsV[tind][aind].endtheta;
             if (targettheta < 0) {
                 targettheta = targettheta + EnvNAVXYTHETALATCfg.NumThetaDirs;
-            }
-
-            if (EnvNAVXYTHETALATCfg.ActionsV[tind][aind].starttheta < 0) {
-
-                throw SBPL_Exception("12");
             }
 
             EnvNAVXYTHETALATCfg.PredActionsV[targettheta].push_back(&(EnvNAVXYTHETALATCfg.ActionsV[tind][aind]));
