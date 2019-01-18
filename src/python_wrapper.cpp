@@ -280,7 +280,16 @@ public:
         int* p_xytheta_cell_path = &xytheta_cell_path_array.mutable_unchecked()(0, 0);
         memcpy(p_xytheta_cell_path, &xythetaCellPath[0], sizeof(int)*xythetaCellPath.size()*3);
 
-        return py::make_tuple(xytheta_path_array, xytheta_cell_path_array, plan_time, solution_epsilon);
+        std::vector<EnvNAVXYTHETALATAction_t> action_list;
+        envWrapper.env().GetActionsFromStateIDPath(&solution_stateIDs_V, &action_list);
+        py::safe_array<int> action_array({(int)action_list.size(), 2});
+        auto actions = action_array.mutable_unchecked<2>();
+        for (int i = 0; i < action_list.size(); ++i) {
+            actions(i, 0) = action_list.at(i).starttheta;
+            actions(i, 1) = action_list.at(i).motprimID;
+        }
+
+        return py::make_tuple(xytheta_path_array, xytheta_cell_path_array, action_array, plan_time, solution_epsilon);
     }
 
     void set_start(const py::safe_array<double> start_pose_array, EnvironmentNAVXYTHETALATWrapper& envWrapper) {

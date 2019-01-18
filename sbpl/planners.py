@@ -9,6 +9,10 @@ import tempfile
 import os
 import shutil
 
+from bc_gym_planning_env.robot_models.differential_drive import kinematic_body_pose_motion_step
+
+from bc_gym_planning_env.utilities.coordinate_transformations import from_egocentric_to_global
+
 from sbpl.environments import EnvNAVXYTHETALAT_InitParms, EnvironmentNAVXYTHETALAT
 from sbpl.motion_primitives import dump_motion_primitives
 from sbpl.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap
@@ -81,13 +85,56 @@ def perform_single_planning(
     planner.set_start(start_pose, environment)
     planner.set_goal(goal_pose, environment)
 
-    plan_xytheta, plan_xytheta_cell, plan_time, solution_eps = planner.replan(
+    plan_xytheta, plan_xytheta_cell, actions, plan_time, solution_eps = planner.replan(
         environment, allocated_time=allocated_time)
 
     if debug:
-        print(start_pose, plan_xytheta)
         print("done with the solution of size=%d and sol. eps=%f" % (len(plan_xytheta_cell), solution_eps))
         print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
+
+        angle_to_primitive = {}
+        for p in motion_primitives.get_primitives():
+            try:
+                angle_primitives = angle_to_primitive[p.starttheta_c]
+            except KeyError:
+                angle_primitives = {}
+                angle_to_primitive[p.starttheta_c] = angle_primitives
+
+            angle_primitives[p.motprimID] = p
+
+
+        trajectory_through_primitives = np.array([start_pose])
+        for angle_id, motor_prim_id in actions:
+            primitive = angle_to_primitive[angle_id][motor_prim_id]
+            states = primitive.get_intermediate_states().copy()
+
+            pose = np.array([0., 0., states[0, 2]])
+            dt = 0.1
+            states_through_control = np.array([pose])
+            for c in primitive.get_control_signals():
+                pose = kinematic_body_pose_motion_step(
+                    pose=pose,
+                    linear_velocity=c[0],
+                    angular_velocity=c[1],
+                    dt=dt)
+                states_through_control = np.vstack((states_through_control, [pose]))
+
+            states[:, :2] += trajectory_through_primitives[-1, :2]
+            trajectory_through_primitives = np.vstack((trajectory_through_primitives, states))
+
+        # dt = 0.1
+        # pose = start_pose
+        # for angle_id, motor_prim_id in actions:
+        #     primitive = angle_to_primitive[angle_id][motor_prim_id]
+        #     for c in primitive.get_control_signals():
+        #         pose = kinematic_body_pose_motion_step(
+        #             pose=pose,
+        #             linear_velocity=c[0],
+        #             angular_velocity=c[1],
+        #             dt=dt)
+        #         trajectory_through_primitives = np.vstack((trajectory_through_primitives, [pose]))
+
+        plan_xytheta = trajectory_through_primitives
 
         params = environment.get_params()
         costmap = environment.get_costmap()
@@ -104,4 +151,4 @@ def perform_single_planning(
         cv2.imshow("planning result", img)
         cv2.waitKey(-1)
 
-    return plan_xytheta, plan_xytheta_cell, plan_time, solution_eps, environment
+    return plan_xytheta, plan_xytheta_cell, actions, plan_time, solution_eps, environment

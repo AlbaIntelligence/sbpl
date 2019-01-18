@@ -37,12 +37,13 @@ class MotionPrimitive(object):
     """Python implementation of motion primitives.
     SBPL-generated primitives are wrapped with cpp SBPL_xytheta_mprimitiveWrapper that has the same interface"""
     def __init__(self, primitive_id, start_theta_discrete, action_cost_multiplier,
-                 end_cell, intermediate_states):
+                 end_cell, intermediate_states, control_signals=None):
         self._id = primitive_id
         self._start_theta_discrete = start_theta_discrete
         self._action_cost_multiplier = action_cost_multiplier
         self._end_cell = freeze_array(np.array(end_cell))
         self._intermediate_states = freeze_array(np.array(intermediate_states))
+        self._control_signals = freeze_array(control_signals)
 
     @property
     def motprimID(self):
@@ -66,6 +67,9 @@ class MotionPrimitive(object):
 
     def get_intermediate_states(self):
         return self._intermediate_states
+
+    def get_control_signals(self):
+        return self._control_signals
 
 
 def load_motion_pritimives(mprim_filename):
