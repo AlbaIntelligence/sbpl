@@ -139,7 +139,7 @@ def perform_single_planning(
         draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
         draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
         draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))
-        magnify = 2
+        magnify = 8
         img = cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST)
         cv2.imshow("planning result", img)
         cv2.waitKey(-1)
