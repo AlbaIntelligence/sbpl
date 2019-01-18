@@ -177,7 +177,8 @@ def world_to_pixel_sbpl(world_coords, origin, resolution):
     assert world_coords.shape[world_coords.ndim - 1] == 2
 
     # (((X)>=0)?((int)((X)/(CELLSIZE))):((int)((X)/(CELLSIZE))-1))
-    result = ((world_coords - origin) / resolution).astype(np.int)
+
+    result = ((world_coords - origin) / np.float(resolution)).astype(np.int)
     result[world_coords < 0] -= 1
     return result
 
