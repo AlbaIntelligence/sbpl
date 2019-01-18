@@ -7,9 +7,13 @@ import numpy as np
 import os
 import cv2
 
+from sbpl.utilities.control_policies.diff_drive_contol_policies import control_choices_diff_drive_exhaustive
+from sbpl.utilities.coordinate_transformations import from_egocentric_to_global
 from sbpl.utilities.costmap_2d_python import freeze_array
+from sbpl.utilities.differential_drive import kinematic_body_pose_motion_step
 from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_arrow
-from sbpl.utilities.path_tools import pixel_to_world_centered, angle_discrete_to_cont, normalize_angle
+from sbpl.utilities.path_tools import pixel_to_world_centered, angle_discrete_to_cont, normalize_angle, \
+    world_to_pixel_sbpl, angle_cont_to_discrete
 
 
 def mprim_folder():
@@ -55,7 +59,9 @@ class MotionPrimitive(object):
         self._action_cost_multiplier = action_cost_multiplier
         self._end_cell = freeze_array(np.array(end_cell))
         self._intermediate_states = freeze_array(np.array(intermediate_states))
-        self._control_signals = freeze_array(control_signals)
+        if control_signals is not None:
+            control_signals = freeze_array(control_signals.copy())
+        self._control_signals = control_signals
 
     @property
     def motprimID(self):
@@ -301,6 +307,85 @@ def exhaustive_geometric_primitives(resolution, number_of_intermediate_states, n
     )
 
 
+
+def forward_model_diffdrive_motion_primitives(
+        resolution, number_of_angles, target_v, target_w, w_samples_in_each_direction,
+        primitives_duration):
+
+    def forward_model(pose, state, dt, control_signals):
+        new_pose = kinematic_body_pose_motion_step(
+            pose=pose,
+            linear_velocity=control_signals[:, 0],
+            angular_velocity=control_signals[:, 1],
+            dt=dt)
+        next_state = state.copy()
+        next_state[:, 0] = control_signals[:, 0]
+        next_state[:, 1] = control_signals[:, 1]
+        return new_pose, next_state
+
+    refine_dt = 0.05
+
+    pose_evolution, state_evolution, control_evolution, refine_dt, control_costs = control_choices_diff_drive_exhaustive(
+        max_v=target_v,
+        max_w=target_w,
+        forward_model=forward_model,
+        initial_state=(0., 0.),
+        refine_dt=refine_dt,
+        exhausitve_dt=refine_dt*primitives_duration,
+        n_steps=1,
+        w_samples_in_each_direction=w_samples_in_each_direction,
+        enable_turn_in_place=True,
+        v_samples=1
+    )
+
+    primitives = []
+    for start_theta_discrete in range(number_of_angles):
+        current_primitive_cells = []
+        for primitive_id, (ego_poses, controls) in enumerate(zip(pose_evolution, control_evolution)):
+            ego_poses = np.vstack(([[0., 0., 0.]], ego_poses))
+            start_angle = angle_discrete_to_cont(start_theta_discrete, number_of_angles)
+            poses = from_egocentric_to_global(
+                ego_poses,
+                ego_pose_in_global_coordinates=np.array([0., 0., start_angle]))
+
+            # to model precision loss while converting to .mprim file, we round it here
+            last_pose = np.around(poses[-1], decimals=4)
+            end_cell = np.zeros((3,), dtype=int)
+
+            center_cell_shift = pixel_to_world_centered(np.zeros((2,)), np.zeros((2,)), resolution)
+            end_cell[:2] = world_to_pixel_sbpl(center_cell_shift + last_pose[:2], np.zeros((2,)), resolution)
+            perfect_last_pose = np.zeros((3,), dtype=float)
+            end_cell[2] = angle_cont_to_discrete(last_pose[2], number_of_angles)
+
+            current_primitive_cells.append(tuple(end_cell))
+
+            perfect_last_pose[:2] = pixel_to_world_centered(end_cell[:2], np.zeros((2,)), resolution)
+            perfect_last_pose[2] = angle_discrete_to_cont(end_cell[2], number_of_angles)
+
+            # penalize slow movement forward and sudden jerns
+            if controls[0, 0] < target_v*0.5 or abs(controls[0, 1]) > 0.5*target_w:
+                action_cost_multiplier = 100
+            else:
+                action_cost_multiplier = 1
+
+            primitive = MotionPrimitive(
+                primitive_id=primitive_id,
+                start_theta_discrete=start_theta_discrete,
+                action_cost_multiplier=action_cost_multiplier,
+                end_cell=end_cell,
+                intermediate_states=poses,
+                control_signals=controls
+            )
+            primitives.append(primitive)
+
+        print('There are %d unique primitives from %d' % (len(set(current_primitive_cells)),
+                                                          len(current_primitive_cells)))
+
+    return MotionPrimitives(
+        resolution=resolution,
+        number_of_angles=number_of_angles,
+        mprim_list=primitives
+    )
 
 if __name__ == '__main__':
     # mprimtives = load_motion_pritimives(os.path.join(mprim_folder(), 'custom/gtx_32_10.mprim'))
