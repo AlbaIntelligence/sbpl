@@ -423,7 +423,7 @@ int planandnavigatexythetalat(PlannerType plannerType, char* envCfgFilename, cha
         params.startx, params.starty, params.starttheta,
         params.goalx, params.goaly, params.goaltheta);
 
-    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, map, params);
+    bool envInitialized = environment_navxythetalat.InitializeEnv(perimeterptsV, motPrimFilename, map, params, true);
 
     if (!envInitialized) {
         throw SBPL_Exception("ERROR: InitializeEnv failed");

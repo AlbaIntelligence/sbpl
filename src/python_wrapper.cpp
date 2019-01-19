@@ -82,7 +82,8 @@ public:
         const py::safe_array<double>& footprint_array,
         const char* motPrimFilename,
         const py::safe_array<unsigned char>& map_data_array,
-        EnvNAVXYTHETALAT_InitParms params) {
+        EnvNAVXYTHETALAT_InitParms params,
+        bool computeKernels) {
         auto footprint = footprint_array.unchecked<2>();
 
         std::vector<sbpl_2Dpt_t> perimeterptsV;
@@ -98,7 +99,7 @@ public:
             perimeterptsV.push_back(sbpl_2Dpt_t(footprint(i, 0), footprint(i, 1)));
         }
         const unsigned char* map_data = &map_data_array.unchecked<2>()(0, 0);
-        bool envInitialized = _environment.InitializeEnv(perimeterptsV, motPrimFilename, map_data, params);
+        bool envInitialized = _environment.InitializeEnv(perimeterptsV, motPrimFilename, map_data, params, computeKernels);
         if (!envInitialized) {
             throw SBPL_Exception("ERROR: InitializeEnv failed");
         }
@@ -453,7 +454,8 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def(py::init<const py::safe_array<double>&,
                      const char*,
                      const py::safe_array<unsigned char>&,
-                     EnvNAVXYTHETALAT_InitParms>())
+                     EnvNAVXYTHETALAT_InitParms,
+                     bool>())
        .def("get_params", &EnvironmentNAVXYTHETALATWrapper::get_params)
        .def("get_costmap", &EnvironmentNAVXYTHETALATWrapper::get_costmap)
        .def("get_motion_primitives_list", &EnvironmentNAVXYTHETALATWrapper::get_motion_primitives)

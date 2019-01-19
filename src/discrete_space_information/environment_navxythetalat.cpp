@@ -1030,7 +1030,7 @@ void EnvironmentNAVXYTHETALATTICE::ComputeReplanningData()
 
 // here motionprimitivevector contains actions for all angles
 void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
-    std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV)
+    std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV, bool computeKernels)
 {
     SBPL_PRINTF("Pre-computing action data using motion primitives for every angle...\n");
     EnvNAVXYTHETALATCfg.ActionsV = new EnvNAVXYTHETALATAction_t*[EnvNAVXYTHETALATCfg.NumThetaDirs];
@@ -1162,12 +1162,14 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
             // use any additional cost multiplier
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].cost *= motionprimitiveV->at(mind).additionalactioncostmult;
 
-            // now compute the intersecting cells for this motion (including ignoring the source footprint)
-            get_2d_motion_cells(
-                    EnvNAVXYTHETALATCfg.FootprintPolygon,
-                    motionprimitiveV->at(mind).intermptV,
-                    &EnvNAVXYTHETALATCfg.ActionsV[tind][aind].intersectingcellsV,
-                    EnvNAVXYTHETALATCfg.cellsize_m);
+            if (computeKernels) {
+                // now compute the intersecting cells for this motion (including ignoring the source footprint)
+                get_2d_motion_cells(
+                        EnvNAVXYTHETALATCfg.FootprintPolygon,
+                        motionprimitiveV->at(mind).intermptV,
+                        &EnvNAVXYTHETALATCfg.ActionsV[tind][aind].intersectingcellsV,
+                        EnvNAVXYTHETALATCfg.cellsize_m);
+            }
 
 #if DEBUG
             SBPL_DEBUG(
@@ -1217,7 +1219,9 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
     SBPL_PRINTF("done pre-computing action data based on motion primitives\n");
 }
 
-void EnvironmentNAVXYTHETALATTICE::InitializeEnvConfig(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV)
+void EnvironmentNAVXYTHETALATTICE::InitializeEnvConfig(
+    std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV,
+    bool computeKernels)
 {
     // additional to configuration file initialization of EnvNAVXYTHETALATCfg if
     // necessary
@@ -1270,7 +1274,7 @@ void EnvironmentNAVXYTHETALATTICE::InitializeEnvConfig(std::vector<SBPL_xytheta_
         // throw SBPL_Exception("Motion primitive is NULL");
     }
     else {
-        PrecomputeActionswithCompleteMotionPrimitive(motionprimitiveV);
+        PrecomputeActionswithCompleteMotionPrimitive(motionprimitiveV, computeKernels);
     }
 }
 
@@ -1667,11 +1671,11 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
             throw new SBPL_Exception("ERROR: illegal goal coordinates for theta");
         }
 
-        InitGeneral(&EnvNAVXYTHETALATCfg.mprimV);
+        InitGeneral(&EnvNAVXYTHETALATCfg.mprimV, true);
         fclose(fMotPrim);
     }
     else {
-        InitGeneral( NULL);
+        InitGeneral( NULL, true);
     }
 
     SBPL_PRINTF("size of env: %d by %d\n", EnvNAVXYTHETALATCfg.EnvWidth_c, EnvNAVXYTHETALATCfg.EnvHeight_c);
@@ -1689,7 +1693,7 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(const char* sEnvFile)
     ReadConfiguration(fCfg);
     fclose(fCfg);
 
-    InitGeneral( NULL);
+    InitGeneral( NULL, true);
 
     return true;
 }
@@ -1698,7 +1702,8 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
     const std::vector<sbpl_2Dpt_t>& perimeterptsV,
     const char* sMotPrimFile,
     const unsigned char* mapdata,
-    EnvNAVXYTHETALAT_InitParms params)
+    EnvNAVXYTHETALAT_InitParms params,
+    bool computeKernels)
 {
     EnvNAVXYTHETALATCfg.NumThetaDirs = params.numThetas;
 
@@ -1720,7 +1725,8 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
             params.nominalvel_mpersecs,
             params.timetoturn45degsinplace_secs,
             params.obsthresh,
-            sMotPrimFile);
+            sMotPrimFile,
+            computeKernels);
 }
 
 bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
@@ -1734,7 +1740,8 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
     double nominalvel_mpersecs,
     double timetoturn45degsinplace_secs,
     unsigned char obsthresh,
-    const char* sMotPrimFile)
+    const char* sMotPrimFile,
+    bool computeKernels)
 {
     SBPL_PRINTF("env: initialize with width=%d height=%d start=%.3f %.3f %.3f "
                 "goalx=%.3f %.3f %.3f cellsize=%.3f nomvel=%.3f timetoturn=%.3f, obsthresh=%d\n",
@@ -1792,20 +1799,21 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
             perimeterptsV);
 
     if (EnvNAVXYTHETALATCfg.mprimV.size() != 0) {
-        InitGeneral(&EnvNAVXYTHETALATCfg.mprimV);
+        InitGeneral(&EnvNAVXYTHETALATCfg.mprimV, computeKernels);
     }
     else {
-        InitGeneral( NULL);
+        InitGeneral( NULL, computeKernels);
     }
 
     return true;
 }
 
 bool EnvironmentNAVXYTHETALATTICE::InitGeneral(
-    std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV)
+    std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV,
+    bool computeKernels)
 {
     // Initialize other parameters of the environment
-    InitializeEnvConfig(motionprimitiveV);
+    InitializeEnvConfig(motionprimitiveV, computeKernels);
 
     // initialize Environment
     InitializeEnvironment();

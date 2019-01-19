@@ -347,7 +347,8 @@ public:
                                double goalx, double goaly, double goaltheta,
                                const std::vector<sbpl_2Dpt_t>& perimeterptsV, double cellsize_m,
                                double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
-                               unsigned char obsthresh, const char* sMotPrimFile);
+                               unsigned char obsthresh, const char* sMotPrimFile,
+                               bool computeKernels);
 
     /**
      * \brief Same as the above InitializeEnv except that only the parameters
@@ -358,7 +359,8 @@ public:
     virtual bool InitializeEnv(const std::vector<sbpl_2Dpt_t> & perimeterptsV,
                                const char* sMotPrimFile,
                                const unsigned char* mapdata,
-                               EnvNAVXYTHETALAT_InitParms params);
+                               EnvNAVXYTHETALAT_InitParms params,
+                               bool computeKernels);
 
     /**
      * \brief update the traversability of a cell<x,y>
@@ -492,7 +494,7 @@ protected:
 
     virtual void ReadConfiguration(FILE* fCfg);
 
-    virtual void InitializeEnvConfig(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
+    virtual void InitializeEnvConfig(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV, bool computeKernels);
 
     virtual bool CheckQuant(FILE* fOut);
 
@@ -504,8 +506,8 @@ protected:
                                   double cellsize_m, double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
                                   const std::vector<sbpl_2Dpt_t> & robot_perimeterV);
 
-    virtual bool InitGeneral(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
-    virtual void PrecomputeActionswithCompleteMotionPrimitive(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
+    virtual bool InitGeneral(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV, bool computeKernels);
+    virtual void PrecomputeActionswithCompleteMotionPrimitive(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV, bool computeKernels);
 
     virtual void InitializeEnvironment() = 0;
 
