@@ -47,7 +47,7 @@ def compute_cost_possibly_circumscribed_thresh(footprint, resolution, cost_scali
     '''
     distance = circumscribed_radius(footprint)
     inscribed_rad = inscribed_radius(footprint)
-    distance_to_cost = _pixel_distance_to_cost(distance / resolution, resolution,
+    distance_to_cost = _pixel_distance_to_cost(distance / resolution + 1, resolution,
                                                inscribed_rad, cost_scaling_factor)
     return max(0, distance_to_cost - 1)
 
@@ -64,7 +64,7 @@ def _pixel_distance_to_cost(distance, resolution, inscribed_rad, cost_scaling_fa
     pixel_inscribed_radius = inscribed_rad / resolution
     pixel_scaling_factor = cost_scaling_factor * resolution
 
-    lethal = distance < (pixel_inscribed_radius / 1000.)
+    lethal = distance < (pixel_inscribed_radius/1000.)  # 1000 is probably a bug - the intent here that lethal is always false
     inscribed = distance <= pixel_inscribed_radius
     other = distance > pixel_inscribed_radius
 
