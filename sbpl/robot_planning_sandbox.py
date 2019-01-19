@@ -20,7 +20,7 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         footprint_scale):
 
     test_map = CostMap2D(
-        data=np.zeros((12, 7), dtype=np.uint8),
+        data=np.zeros((10, 7), dtype=np.uint8),
         origin=np.array([0., 0.]),
         resolution=0.2
     )
@@ -45,10 +45,10 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         refine_dt=0.1
     )
 
-    add_wall_to_static_map(test_map, (1.08, 1.55), (2.78, 1.55))
+    add_wall_to_static_map(test_map, (1., 1.1), (2.8, 1.1))
 
-    start_pose = np.array([0.78, 1.93, -np.pi/2])
-    goal_pose = np.array([0.78, 0.96, -np.pi/2])
+    start_pose = np.array([0.7, 1.5, -np.pi/2])
+    goal_pose = np.array([0.7, 0.5, -np.pi/2])
     print(start_pose)
     print(goal_pose)
 
