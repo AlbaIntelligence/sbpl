@@ -15,6 +15,7 @@ from bc_gym_planning_env.utilities.coordinate_transformations import from_egocen
 
 from sbpl.environments import EnvNAVXYTHETALAT_InitParms, EnvironmentNAVXYTHETALAT
 from sbpl.motion_primitives import dump_motion_primitives
+from sbpl.utilities.costmap_2d_python import CostMap2D
 from sbpl.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap
 from sbpl.utilities.map_drawing_utils import prepare_canvas, draw_world_map, draw_robot, draw_trajectory
 
@@ -131,6 +132,7 @@ def perform_single_planning(
 
         params = environment.get_params()
         costmap = environment.get_costmap()
+
         img = prepare_canvas(costmap.shape)
         draw_world_map(img, costmap)
         for pose in plan_xytheta:
@@ -139,7 +141,7 @@ def perform_single_planning(
         draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
         draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
         draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))
-        magnify = 8
+        magnify = 2
         img = cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST)
         cv2.imshow("planning result", img)
         cv2.waitKey(-1)

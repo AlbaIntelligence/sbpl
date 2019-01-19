@@ -3,13 +3,16 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-
+import cv2
 
 from sbpl.motion_primitives import forward_model_diffdrive_motion_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.costmap_2d_python import CostMap2D
 from sbpl.utilities.differential_drive import industrial_diffdrive_footprint
-from sbpl.utilities.map_drawing_utils import add_wall_to_static_map
+from sbpl.utilities.map_drawing_utils import add_wall_to_static_map, draw_robot, prepare_canvas, draw_world_map
+
+from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
+    get_random_maps_squeeze_between_obstacle_in_corridor_on_path
+from sbpl.utilities.path_tools import pixel_to_world_centered, normalize_angle
 
 
 def run_sbpl_motiont_primitive_planning_benchmark(
@@ -18,14 +21,9 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         w_samples_in_each_direction,
         primitives_duration,
         footprint_scale):
+    original_costmap, static_path, test_maps = get_random_maps_squeeze_between_obstacle_in_corridor_on_path()
 
-    test_map = CostMap2D(
-        data=np.zeros((40, 17), dtype=np.uint8),
-        origin=np.array([0., 0.]),
-        resolution=0.1
-    )
-    test_map.get_data()[:] = 0
-    print(test_map.get_origin(), test_map.get_data().shape)
+    test_map = test_maps[0]
     resolution = test_map.get_resolution()
 
     motion_primitives = forward_model_diffdrive_motion_primitives(
@@ -37,21 +35,8 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         primitives_duration=primitives_duration
     )
 
-    # footprint = industrial_diffdrive_footprint(footprint_scaler=footprint_scale)
-    footprint = np.array([
-       [0.2, 0.4],
-       [-0.2, 0.3],
-       [-0.2, -0.4],
-       [0.2, -0.4],
-    ])
-
-    add_wall_to_static_map(test_map, (0.07828677, 2.25250846), (0.07828677, 3.95250846))
-    add_wall_to_static_map(test_map, (1.07828677, 2.15250846), (1.47828677, 2.15250846))
-
-    start_pose = np.array([0.9818883, 3.52881533, -np.pi/2])
-    goal_pose = np.array([0.97828677, 1.56319919, -np.pi/2])
-    print(start_pose)
-    print(goal_pose)
+    add_wall_to_static_map(test_map, (1, -4.6), (1.5, -4.6))
+    footprint = industrial_diffdrive_footprint(footprint_scaler=footprint_scale)
 
     plan_xytheta, plan_xytheta_cell, actions, plan_time, solution_eps, environment = perform_single_planning(
         planner_name='arastar',
@@ -59,13 +44,71 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         motion_primitives=motion_primitives,
         forward_search=True,
         costmap=test_map,
-        start_pose=start_pose,
-        goal_pose=goal_pose,
+        start_pose=static_path[0],
+        goal_pose=static_path[-10],
         target_v=target_v,
         target_w=target_w,
         allocated_time=np.inf,
-        cost_scaling_factor=1.,
-        debug=True)
+        cost_scaling_factor=4.,
+        debug=False)
+
+    params = environment.get_params()
+    costmap = environment.get_costmap()
+
+    img = prepare_canvas(costmap.shape)
+    draw_world_map(img, costmap)
+    start_pose = static_path[0]
+    start_pose[:2] -= test_map.get_origin()
+    goal_pose = static_path[-10]
+    goal_pose[:2] -= test_map.get_origin()
+
+    trajectory_through_primitives = np.array([start_pose])
+
+    plan_xytheta_cell = np.vstack(([environment.xytheta_real_to_cell(start_pose)], plan_xytheta_cell))
+    for i in range(len(actions)):
+        angle_c, motor_prim_id = actions[i]
+        collisions = environment.get_primitive_collision_pixels(angle_c, motor_prim_id)
+        pose_cell = plan_xytheta_cell[i]
+        assert pose_cell[2] == angle_c
+        collisions[:, 0] += pose_cell[0]
+        collisions[:, 1] += pose_cell[1]
+
+        primitive_start = pixel_to_world_centered(pose_cell[:2], np.zeros((2,)), test_map.get_resolution())
+        primitive = motion_primitives.find_primitive(angle_c, motor_prim_id)
+        primitive_states = primitive.get_intermediate_states().copy()
+        primitive_states[:, :2] += primitive_start
+
+        trajectory_through_primitives = np.vstack((trajectory_through_primitives, primitive_states))
+
+        # img = np.flipud(img)
+        # img[collisions[:, 1], collisions[:, 0], 1] = 70
+        # img[pose_cell[1], pose_cell[0], :] = 255
+        # img = np.flipud(img)
+        #
+        # magnify = 2
+        # cv2.imshow("planning result",
+        #            cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST))
+        # cv2.waitKey(-1)
+        #
+        # for pose in primitive_states:
+        #     draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
+        #                color=70, color_axis=(0, 1))
+        #
+        # cv2.imshow("planning result",
+        #            cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST))
+        # cv2.waitKey(-1)
+
+    for pose in trajectory_through_primitives:
+        draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
+                   color=70, color_axis=(1, 2))
+
+    # draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
+    draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
+    draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))
+    magnify = 2
+    img = cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST)
+    cv2.imshow("planning result", img)
+    cv2.waitKey(-1)
 
 
 if __name__ == '__main__':
@@ -73,7 +116,16 @@ if __name__ == '__main__':
         target_v=0.65,
         target_w=1.0,
         number_of_angles=32,
-        w_samples_in_each_direction=2,
+        w_samples_in_each_direction=4,
         primitives_duration=5,
         footprint_scale=1.8
     )
+
+    # run_sbpl_motiont_primitive_planning_benchmark(
+    #     target_v=0.65,
+    #     target_w=1.0,
+    #     number_of_angles=4,
+    #     w_samples_in_each_direction=2,
+    #     primitives_duration=1,
+    #     footprint_scale=1.8
+    # )

@@ -13,7 +13,7 @@ from sbpl.utilities.costmap_2d_python import freeze_array
 from sbpl.utilities.differential_drive import kinematic_body_pose_motion_step
 from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_arrow
 from sbpl.utilities.path_tools import pixel_to_world_centered, angle_discrete_to_cont, normalize_angle, \
-    world_to_pixel_sbpl, angle_cont_to_discrete
+    world_to_pixel_sbpl, angle_cont_to_discrete, diff_angles
 
 
 def mprim_folder():
@@ -127,11 +127,8 @@ def check_motion_primitives(motion_primitives):
         first_state = p.get_intermediate_states()[0]
         assert first_state[0] == 0
         assert first_state[1] == 0
-        np.testing.assert_almost_equal(
-            angle_discrete_to_cont(p.starttheta_c, motion_primitives.get_number_of_angles()),
-            normalize_angle(first_state[2]),
-            decimal=4
-        )
+        d_angles = diff_angles(angle_discrete_to_cont(p.starttheta_c, motion_primitives.get_number_of_angles()), first_state[2])
+        assert abs(d_angles) < 1e-4
 
     angle_to_primitive = {}
     for p in motion_primitives.get_primitives():
@@ -347,7 +344,8 @@ def forward_model_diffdrive_motion_primitives(
                 ego_pose_in_global_coordinates=np.array([0., 0., start_angle]))
 
             # to model precision loss while converting to .mprim file, we round it here
-            last_pose = np.around(poses[-1], decimals=4)
+            poses = np.around(poses, decimals=4)
+            last_pose = poses[-1]
             end_cell = np.zeros((3,), dtype=int)
 
             center_cell_shift = pixel_to_world_centered(np.zeros((2,)), np.zeros((2,)), resolution)
@@ -384,6 +382,7 @@ def forward_model_diffdrive_motion_primitives(
         number_of_angles=number_of_angles,
         mprim_list=primitives
     )
+
 
 if __name__ == '__main__':
     # mprimtives = load_motion_pritimives(os.path.join(mprim_folder(), 'custom/gtx_32_10.mprim'))
