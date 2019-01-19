@@ -110,7 +110,9 @@ def get_pixel_footprint(angle, robot_footprint, map_resolution, fill=True):
     footprint_corner = np.maximum(np.amax(rot_pix_footprints.reshape(-1, 2), axis=0),
                                   -np.amin(rot_pix_footprints.reshape(-1, 2), axis=0))
     pic_half_size = np.ceil(footprint_corner).astype(np.int32)
-    int_footprints = np.round(rot_pix_footprints).astype(np.int32)
+    # int_footprints = np.round(rot_pix_footprints).astype(np.int32)
+
+    int_footprints = np.floor(rot_pix_footprints).astype(np.int32)
     # get unique int footprints to save time; using http://stackoverflow.com/questions/16970982/find-unique-rows-in-numpy-array
     flat_int_footprints = int_footprints.reshape(len(angles), -1)
     row_view = np.ascontiguousarray(flat_int_footprints).view(np.dtype((np.void, flat_int_footprints.dtype.itemsize * flat_int_footprints.shape[1])))
