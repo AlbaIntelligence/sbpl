@@ -211,6 +211,44 @@ public:
 
     }
 
+    py::safe_array<int> update_environment_costmap(
+        const py::safe_array<unsigned char>& new_costmap_array)
+    {
+
+        auto params = this->get_params();
+
+        if (new_costmap_array.shape(0) != params.size_y ||
+            new_costmap_array.shape(1) != params.size_x) {
+            throw SBPL_Exception("Costmap sizes do not match");
+        }
+
+        auto new_costmap = new_costmap_array.unchecked<2>();
+
+        std::vector<nav2dcell_t> changedcellsV;
+        // simulate sensing the cells
+        for (int x = 0; x < (int)params.size_x; x++) {
+            for (int y = 0; y < (int)params.size_y; y++) {
+                unsigned char truecost = new_costmap(y, x);
+                // update the cell if we haven't seen it before
+                if (_environment.GetMapCost(x, y) != truecost) {
+                    _environment.UpdateCost(x, y, truecost);
+                    // store the changed cells
+                    nav2dcell_t nav2dcell;
+                    nav2dcell.x = x;
+                    nav2dcell.y = y;
+                    changedcellsV.push_back(nav2dcell);
+                }
+            }
+        }
+
+        py::safe_array<int> changed_cells_array({(int)changedcellsV.size(), 2});
+        int* p_changed_cells = &changed_cells_array.mutable_unchecked()(0, 0);
+        memcpy(p_changed_cells, &changedcellsV[0].x, sizeof(int)*changedcellsV.size()*2);
+
+        return changed_cells_array;
+    }
+
+
 private:
     EnvironmentNAVXYTHETALAT _environment;
 
@@ -465,6 +503,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def("get_cost_thresholds", &EnvironmentNAVXYTHETALATWrapper::get_cost_thresholds)
        .def("get_primitive_collision_pixels", &EnvironmentNAVXYTHETALATWrapper::get_primitive_collision_pixels)
        .def("set_primitive_collision_pixels", &EnvironmentNAVXYTHETALATWrapper::set_primitive_collision_pixels)
+       .def("update_environment_costmap", &EnvironmentNAVXYTHETALATWrapper::update_environment_costmap)
     ;
 
     py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")
@@ -519,4 +558,5 @@ PYBIND11_MODULE(_sbpl_module, m) {
         .def(py::init<int>())
         .def("sense_environment", &IncrementalSensingWrapper::sense_environment)
     ;
+
 }
