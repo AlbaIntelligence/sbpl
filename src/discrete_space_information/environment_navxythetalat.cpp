@@ -2271,7 +2271,7 @@ void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(
         sourcex = DISCXY2CONT(sourcex_c, EnvNAVXYTHETALATCfg.cellsize_m);
         sourcey = DISCXY2CONT(sourcey_c, EnvNAVXYTHETALATCfg.cellsize_m);
         // TODO - when there are no motion primitives we should still print source state
-        for (int ipind = 0; ipind < ((int)actionV[bestsind]->intermptV.size()) - 1; ipind++) {
+        for (int ipind = 0; ipind < ((int)actionV[bestsind]->intermptV.size()); ipind++) {
             // translate appropriately
             sbpl_xy_theta_pt_t intermpt = actionV[bestsind]->intermptV[ipind];
             intermpt.x += sourcex;
@@ -3264,6 +3264,24 @@ void EnvironmentNAVXYTHETALAT::GetCollisionCellsForPrimitive(
          if (nav3daction->motprimID == motprimID) {
              for(int i = 0; i < nav3daction->intersectingcellsV.size(); i++) {
                 collisionCells->push_back(nav3daction->intersectingcellsV.at(i));
+             }
+             return;
+         }
+    }
+}
+
+
+void EnvironmentNAVXYTHETALAT::SetCollisionCellsForPrimitive(
+    int angle_c,
+    int motprimID,
+    const std::vector<sbpl_2Dcell_t>& collisionCells)
+{
+    for (int aind = 0; aind < EnvNAVXYTHETALATCfg.actionwidth; aind++) {
+         EnvNAVXYTHETALATAction_t* nav3daction = &EnvNAVXYTHETALATCfg.ActionsV[angle_c][aind];
+         if (nav3daction->motprimID == motprimID) {
+             nav3daction->intersectingcellsV.clear();
+             for(int i = 0; i < collisionCells.size(); i++) {
+                nav3daction->intersectingcellsV.push_back(collisionCells.at(i));
              }
              return;
          }

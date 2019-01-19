@@ -675,6 +675,11 @@ public:
      * Return collision pixels for an action
      */
     virtual void GetCollisionCellsForPrimitive(int SourceTheta, int motprimID, std::vector<sbpl_2Dcell_t>* collisionCells) const;
+    /*
+     * Set collision pixels for an action
+     */
+    virtual void SetCollisionCellsForPrimitive(int SourceTheta, int motprimID, const std::vector<sbpl_2Dcell_t>& collisionCells);
+
 
 protected:
     //hash table of size x_size*y_size. Maps from coords to stateId
