@@ -97,11 +97,11 @@ install(DIRECTORY src/include/sbpl DESTINATION include
 install(TARGETS sbpl
 	LIBRARY DESTINATION lib)
 
-add_executable(test_sbpl src/test/main.cpp)
-target_link_libraries(test_sbpl sbpl)
+#add_executable(test_sbpl src/test/main.cpp)
+#target_link_libraries(test_sbpl sbpl)
 
-add_executable(test_adjacency_list src/test/test_adjacency_list.cpp)
-target_link_libraries(test_adjacency_list sbpl)
+#add_executable(test_adjacency_list src/test/test_adjacency_list.cpp)
+#target_link_libraries(test_adjacency_list sbpl)
 
 
 if(APPLE)
