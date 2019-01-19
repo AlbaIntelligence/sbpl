@@ -1385,8 +1385,14 @@ int EnvironmentNAVXYTHETALATTICE::GetActionCost(
 
 // cost computation changed: cost = max(cost of centers of the robot along
 // action) intersecting cells are only used for collision checking
-//            if (EnvNAVXYTHETALATCfg.Grid2D[cell.x][cell.y] > currentmaxcost) {
-//              currentmaxcost = EnvNAVXYTHETALATCfg.Grid2D[cell.x][cell.y];
+//            if (EnvNAVXYTHETALATCfg.Grid2D[cell.x][cell.y] > maxcellcost) {
+//
+                //maxcellcost = EnvNAVXYTHETALATCfg.Grid2D[cell.x][cell.y];
+                //if (maxcellcost == 254) {
+//
+  //                  throw SBPL_Exception("NNOOOOO");
+    //            }
+                //SBPL_DEBUG("%d %d %d", cell.x, cell.y, maxcellcost);
 //            }
         }
     }
