@@ -20,13 +20,20 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         footprint_scale):
 
     test_map = CostMap2D(
-        data=np.zeros((20, 8), dtype=np.uint8),
+        data=np.zeros((12, 7), dtype=np.uint8),
         origin=np.array([0., 0.]),
         resolution=0.2
     )
     test_map.get_data()[:] = 0
-    print(test_map.get_origin(), test_map.get_data().shape)
     resolution = test_map.get_resolution()
+
+    # footprint = industrial_diffdrive_footprint(footprint_scaler=footprint_scale)
+    footprint = np.array([
+       [0.2, 0.4],
+       [-0.2, 0.3],
+       [-0.2, -0.4],
+       [0.2, -0.4],
+    ])
 
     motion_primitives = forward_model_diffdrive_motion_primitives(
         resolution=resolution,
@@ -38,17 +45,16 @@ def run_sbpl_motiont_primitive_planning_benchmark(
         refine_dt=0.1
     )
 
-    add_wall_to_static_map(test_map, (0.07828677, 2.25250846), (0.07828677, 3.95250846))
-    add_wall_to_static_map(test_map, (1.27828677, 2.15250846), (2.97828677, 2.15250846))
+    add_wall_to_static_map(test_map, (1.08, 1.55), (2.78, 1.55))
 
-    start_pose = np.array([0.9818883, 3.52881533, -np.pi/2])
-    goal_pose = np.array([0.97828677, 1.56319919, -np.pi/2])
+    start_pose = np.array([0.78, 1.93, -np.pi/2])
+    goal_pose = np.array([0.78, 0.96, -np.pi/2])
     print(start_pose)
     print(goal_pose)
 
     plan_xytheta, plan_xytheta_cell, actions, plan_time, solution_eps, environment = perform_single_planning(
         planner_name='arastar',
-        footprint=industrial_diffdrive_footprint(footprint_scaler=footprint_scale),
+        footprint=footprint,
         motion_primitives=motion_primitives,
         forward_search=True,
         costmap=test_map,
