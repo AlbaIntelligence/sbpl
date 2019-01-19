@@ -189,6 +189,16 @@ public:
     }
 
 
+    py::safe_array<int> get_primitive_collision_pixels(int SourceTheta, int motprimID) const {
+
+        std::vector<sbpl_2Dcell_t> collisionCells;
+        _environment.GetCollisionCellsForPrimitive(SourceTheta, motprimID, &collisionCells);
+        py::safe_array<int> result_array({(int)collisionCells.size(), 2});
+        int* p_result = &result_array.mutable_unchecked()(0, 0);
+        memcpy(p_result, &(collisionCells[0].x), sizeof(int)*collisionCells.size()*2);
+
+        return result_array;
+    }
 private:
     EnvironmentNAVXYTHETALAT _environment;
 
@@ -440,6 +450,7 @@ PYBIND11_MODULE(_sbpl_module, m) {
        .def("xytheta_cell_to_real", &EnvironmentNAVXYTHETALATWrapper::xytheta_cell_to_real)
        .def("is_valid_configuration", &EnvironmentNAVXYTHETALATWrapper::is_valid_configuration)
        .def("get_cost_thresholds", &EnvironmentNAVXYTHETALATWrapper::get_cost_thresholds)
+       .def("get_primitive_collision_pixels", &EnvironmentNAVXYTHETALATWrapper::get_primitive_collision_pixels)
     ;
 
     py::class_<EnvNAVXYTHETALAT_InitParms>(m, "EnvNAVXYTHETALAT_InitParms")

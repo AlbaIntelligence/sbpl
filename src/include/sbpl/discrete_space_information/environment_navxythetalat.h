@@ -68,13 +68,19 @@ struct EnvNAVXYTHETALATAction_t
     int dY;
     int endtheta;
     unsigned int cost;
+
+    // These are cells of a motion primitive, including footprint.
     std::vector<sbpl_2Dcell_t> intersectingcellsV;
-    //start at 0,0,starttheta and end at endcell in continuous domain with half-bin less to account for 0,0 start
+
+    // Raw interposes from motion primitive
     std::vector<sbpl_xy_theta_pt_t> intermptV;
-    //start at 0,0,starttheta and end at endcell in discrete domain
+
+    // Discretized ((res/2,res/2,starttheta) + inter_pose). This effectively is round(inter_pose).
+    // This does not use footpint and therefore used for inscribed_radius fast collision checking.
     std::vector<sbpl_xy_theta_cell_t> interm3DcellsV;
 
     int motprimID;
+
     double turning_radius;
 
 };
@@ -664,6 +670,11 @@ public:
     virtual void PrintVars() { }
 
     const EnvNAVXYTHETALATHashEntry_t* GetStateEntry(int state_id) const;
+
+    /*
+     * Return collision pixels for an action
+     */
+    virtual void GetCollisionCellsForPrimitive(int SourceTheta, int motprimID, std::vector<sbpl_2Dcell_t>* collisionCells) const;
 
 protected:
     //hash table of size x_size*y_size. Maps from coords to stateId

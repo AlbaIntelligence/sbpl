@@ -3252,3 +3252,20 @@ void EnvironmentNAVXYTHETALAT::GetLazyPredsWithUniqueIds(
 {
     GetLazyPreds(TargetStateID, PredIDV, CostV, isTrueCost);
 }
+
+void EnvironmentNAVXYTHETALAT::GetCollisionCellsForPrimitive(
+    int angle_c,
+    int motprimID,
+    std::vector<sbpl_2Dcell_t>* collisionCells) const
+{
+    collisionCells->clear();
+    for (int aind = 0; aind < EnvNAVXYTHETALATCfg.actionwidth; aind++) {
+         EnvNAVXYTHETALATAction_t* nav3daction = &EnvNAVXYTHETALATCfg.ActionsV[angle_c][aind];
+         if (nav3daction->motprimID == motprimID) {
+             for(int i = 0; i < nav3daction->intersectingcellsV.size(); i++) {
+                collisionCells->push_back(nav3daction->intersectingcellsV.at(i));
+             }
+             return;
+         }
+    }
+}
