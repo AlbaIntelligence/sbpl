@@ -16,7 +16,7 @@ def tricycle_branching_policy(pose_evolution, state_evolution, control_evolution
                               dt, theta_samples, v_choices, max_front_wheel_angle,
                               front_wheel_speed, front_wheel_speed_coefficients=None):
     """
-    Function for statefull_branching method that generates possible front wheel angles given GTX constraints.
+    Function for statefull_branching method that generates possible front wheel angles given vehicle constraints.
     state_evolution: matrix of (N, (vel and angle)) where N is the history of the state evolution
     returns: (choices)
     """
@@ -74,10 +74,11 @@ def control_choices_tricycle_exhaustive(
         front_wheel_speed=max_front_wheel_speed
     )
 
-    policies = [(exhaustive_policy, 1), (copy_control_policy, (int(exhausitve_dt/refine_dt)-1))]*n_steps
-    if extra_copy_n_steps > 0:
-        # add extra continuation to the policy to extend the horizon without switching point
-        policies += [(copy_control_policy, extra_copy_n_steps)]
+    # policies = [(exhaustive_policy, 1), (copy_control_policy, (int(exhausitve_dt/refine_dt)-1))]*n_steps
+    # if extra_copy_n_steps > 0:
+    #     # add extra continuation to the policy to extend the horizon without switching point
+    #     policies += [(copy_control_policy, extra_copy_n_steps)]
+    policies = [(exhaustive_policy, 1), (copy_control_policy, extra_copy_n_steps)]
 
     pose_evolution, state_evolution, control_evolution = statefull_branching(
         initial_pose = [0., 0., 0.],

@@ -185,7 +185,7 @@ def debug_motion_primitives(motion_primitives):
 
         endcells = np.array([p.endcell for p in primitives])
         image_half_width = np.amax(np.amax(np.abs(endcells), 0)[:2]) + 1
-        zoom = 40
+        zoom = 10
         img = np.full((zoom*image_half_width*2, zoom*image_half_width*2, 3), 255, dtype=np.uint8)
         resolution = motion_primitives.get_resolution()/zoom
         origin = np.array((-image_half_width*motion_primitives.get_resolution(),

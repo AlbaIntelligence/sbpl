@@ -83,11 +83,11 @@ def perform_single_planning(
     goal_pose = goal_pose.copy()
     goal_pose[:2] -= costmap.get_origin()
 
-    planner.set_start(start_pose, environment)
-    planner.set_goal(goal_pose, environment)
+    planner.set_start(start_pose, environment, True)
+    planner.set_goal(goal_pose, environment, True)
 
     plan_xytheta, plan_xytheta_cell, actions, plan_time, solution_eps = planner.replan(
-        environment, allocated_time=allocated_time)
+        environment, allocated_time=allocated_time, final_epsilon=1)
 
     if debug:
         print("done with the solution of size=%d and sol. eps=%f in %ss" % (len(plan_xytheta_cell), solution_eps, plan_time))
