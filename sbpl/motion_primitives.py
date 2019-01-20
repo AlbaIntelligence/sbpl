@@ -374,8 +374,8 @@ def forward_model_diffdrive_motion_primitives(
             )
             primitives.append(primitive)
 
-        print('There are %d unique primitives from %d' % (len(set(current_primitive_cells)),
-                                                          len(current_primitive_cells)))
+        # print('There are %d unique primitives from %d' % (len(set(current_primitive_cells)),
+        #                                                   len(current_primitive_cells)))
 
     return MotionPrimitives(
         resolution=resolution,

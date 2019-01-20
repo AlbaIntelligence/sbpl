@@ -44,13 +44,13 @@ public:
     :
         std::runtime_error(what_arg)
     {
-        SBPL_ERROR("%s\n", what_arg.c_str());
+        // SBPL_ERROR("%s\n", what_arg.c_str());
     }
 
     explicit SBPL_Exception(const char* what_arg) :
         std::runtime_error(what_arg)
     {
-        SBPL_ERROR("%s\n", what_arg);
+        // SBPL_ERROR("%s\n", what_arg);
     }
 
     virtual ~SBPL_Exception() throw() { }
