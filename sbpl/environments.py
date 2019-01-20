@@ -7,6 +7,7 @@ import sbpl._sbpl_module
 import tempfile
 import os
 import shutil
+import cv2
 import numpy as np
 from sbpl.motion_primitives import MotionPrimitives, dump_motion_primitives
 from sbpl.utilities.map_drawing_utils import draw_robot
@@ -76,7 +77,21 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
             _, idx = np.unique(row_view, return_index=True)
             full_cv_kernel = np.ascontiguousarray(full_cv_kernel[idx])
 
-            self.set_primitive_collision_pixels(p.starttheta_c, p.motprimID, full_cv_kernel)
+            use_full_kernels = False
+            if use_full_kernels:
+                self.set_primitive_collision_pixels(p.starttheta_c, p.motprimID, full_cv_kernel)
+            else:
+                min_x, max_x = np.amin(full_cv_kernel[:, 0]), np.amax(full_cv_kernel[:, 0])
+                min_y, max_y = np.amin(full_cv_kernel[:, 1]), np.amax(full_cv_kernel[:, 1])
+
+                temp_img = np.zeros((max_y - min_y+1, max_x - min_x+1), dtype=np.uint8)
+                temp_img[full_cv_kernel[:, 1] - min_y, full_cv_kernel[:, 0] - min_x] = 255
+                contours, _ = cv2.findContours(temp_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+                contour = contours[0].reshape(-1, 2)
+
+                perimeter_kernel = np.column_stack((contour[:, 0] + min_x, contour[:, 1] + min_y)).astype(np.int32)
+
+                self.set_primitive_collision_pixels(p.starttheta_c, p.motprimID, perimeter_kernel)
 
             # current_kernel = self.get_primitive_collision_pixels(p.starttheta_c, p.motprimID)
             #
@@ -90,13 +105,12 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
             # min_y, max_y = min(min_y, min_y_cv), max(max_y, max_y_cv)
             #
             # img = np.zeros((max_y-min_y+10, max_x - min_x+10, 3), dtype=np.uint8)
-            # img[current_kernel[:, 1]-min_y, current_kernel[:, 0]-min_x, 1] = 100
-            # img[full_cv_kernel[:, 1] - min_y, full_cv_kernel[:, 0] - min_x, 1] += 155
+            # img[current_kernel[:, 1]-min_y, current_kernel[:, 0]-min_x, 1] = 255
+            # img[full_cv_kernel[:, 1] - min_y, full_cv_kernel[:, 0] - min_x, 2] = 255
             # print(len(np.where((img[:, :, 1] > 0) & (img[:, :, 1] < 255))[0]))
             # img = np.flipud(img)
             # magnify = 8
             #
-            # import cv2
             # cv2.imshow("footpint",
             #            cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST))
             # cv2.waitKey(-1)
