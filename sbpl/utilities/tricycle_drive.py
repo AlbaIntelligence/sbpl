@@ -4,7 +4,57 @@ from __future__ import division
 
 import numpy as np
 
-from sbpl.utilities.path_tools import normalize_angle, diff_angles
+from sbpl.utilities.differential_drive import kinematic_body_pose_motion_step
+
+
+def tricycle_kinematic_step(pose, current_wheel_angle, dt, control_signals, max_front_wheel_angle, front_wheel_from_axis,
+                            max_front_wheel_speed, front_column_p_gain, model_front_column_pid=True):
+    '''
+    :param pose: ... x 3  (x, y, angle)
+    :param pose: ... x 1  (wheel_angle)
+    :param dt: integration timestep
+    :param control_signals: ... x 2 (wheel_v, wheel_angle) controls
+    :return: ... x 3 pose and ... x 1 state (wheel_angle) after one timestep
+    '''
+    # rotate the front wheel first
+    if model_front_column_pid:
+        new_wheel_angle = tricycle_front_wheel_column_step(
+            current_wheel_angle, control_signals[:, 1],
+            max_front_wheel_angle, max_front_wheel_speed, front_column_p_gain,
+            dt
+        )
+    else:
+        new_wheel_angle = np.clip(control_signals[:, 1], -max_front_wheel_angle, max_front_wheel_angle)
+
+    desired_wheel_v = control_signals[:, 0]
+    linear_velocity = desired_wheel_v * np.cos(new_wheel_angle)
+    angular_velocity = desired_wheel_v * np.sin(new_wheel_angle) / front_wheel_from_axis
+
+    pose_result = kinematic_body_pose_motion_step(pose, linear_velocity, angular_velocity, dt)
+    return pose_result, new_wheel_angle
+
+
+def tricycle_front_wheel_column_step(current_front_wheel_angle, desired_front_wheel_angle,
+                                     max_front_wheel_angle, max_front_wheel_speed, front_column_p_gain,
+                                     dt):
+    '''
+    The model of the front wheel column which includes PID and takes into account the constraints
+    on the angular velocity of the wheel and maximum angle
+    '''
+    # rotate the front wheel first emulating a pid controller on the front wheel with a finite rotation speed
+    max_front_wheel_delta = max_front_wheel_speed*dt
+    clip_first = False
+    if clip_first:
+        desired_wheel_delta = desired_front_wheel_angle - current_front_wheel_angle
+        desired_wheel_delta = np.clip(desired_wheel_delta, -max_front_wheel_delta, max_front_wheel_delta)
+        new_front_wheel_angle = current_front_wheel_angle + front_column_p_gain*desired_wheel_delta
+    else:
+        desired_wheel_delta = front_column_p_gain*(desired_front_wheel_angle - current_front_wheel_angle)
+        desired_wheel_delta = np.clip(desired_wheel_delta, -max_front_wheel_delta, max_front_wheel_delta)
+        new_front_wheel_angle = current_front_wheel_angle + desired_wheel_delta
+    new_front_wheel_angle = np.clip(new_front_wheel_angle, -max_front_wheel_angle, max_front_wheel_angle)
+    return new_front_wheel_angle
+
 
 
 class IndustrialTricycleV1Dimensions(object):

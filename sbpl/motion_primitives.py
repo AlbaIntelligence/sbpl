@@ -7,13 +7,16 @@ import numpy as np
 import os
 import cv2
 
+from bc_gym_planning_env.robot_models.tricycle_model import tricycle_kinematic_step
 from sbpl.utilities.control_policies.diff_drive_contol_policies import control_choices_diff_drive_exhaustive
+from sbpl.utilities.control_policies.tricycle_control_policies import control_choices_tricycle_exhaustive
 from sbpl.utilities.coordinate_transformations import from_egocentric_to_global
 from sbpl.utilities.costmap_2d_python import freeze_array
 from sbpl.utilities.differential_drive import kinematic_body_pose_motion_step
 from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_arrow
 from sbpl.utilities.path_tools import pixel_to_world_centered, angle_discrete_to_cont, normalize_angle, \
     world_to_pixel_sbpl, angle_cont_to_discrete, diff_angles
+from sbpl.utilities.tricycle_drive import IndustrialTricycleV1Dimensions
 
 
 def mprim_folder():
@@ -154,7 +157,7 @@ def check_motion_primitives(motion_primitives):
     return angle_to_primitive
 
 
-def debug_motion_primitives(motion_primitives):
+def debug_motion_primitives(motion_primitives, only_zero_angle=False):
     angle_to_primitive = check_motion_primitives(motion_primitives)
 
     all_angles = normalize_angle(
@@ -200,6 +203,8 @@ def debug_motion_primitives(motion_primitives):
                        origin, resolution, color=(0, 0, 200))
         cv2.imshow('a', img)
         cv2.waitKey(-1)
+        if only_zero_angle:
+            return
 
 
 def dump_motion_primitives(motion_primitives, filename):
@@ -363,6 +368,100 @@ def forward_model_diffdrive_motion_primitives(
                 action_cost_multiplier = 100
             else:
                 action_cost_multiplier = 1
+
+            primitive = MotionPrimitive(
+                primitive_id=primitive_id,
+                start_theta_discrete=start_theta_discrete,
+                action_cost_multiplier=action_cost_multiplier,
+                end_cell=end_cell,
+                intermediate_states=poses,
+                control_signals=controls
+            )
+            primitives.append(primitive)
+
+        # print('There are %d unique primitives from %d' % (len(set(current_primitive_cells)),
+        #                                                   len(current_primitive_cells)))
+
+    return MotionPrimitives(
+        resolution=resolution,
+        number_of_angles=number_of_angles,
+        mprim_list=primitives
+    )
+
+
+
+def forward_model_tricycle_motion_primitives(
+        resolution, number_of_angles, target_v, tricycle_angle_samples,
+        primitives_duration, front_wheel_rotation_speedup, v_samples, refine_dt=0.1):
+
+    max_front_wheel_angle=IndustrialTricycleV1Dimensions.max_front_wheel_angle()
+    front_wheel_from_axis=IndustrialTricycleV1Dimensions.front_wheel_from_axis()
+    max_front_wheel_speed=IndustrialTricycleV1Dimensions.max_front_wheel_speed()
+    front_column_model_p_gain=IndustrialTricycleV1Dimensions.front_column_model_p_gain()
+
+    def forward_model(pose, initial_states, dt, control_signals):
+        current_wheel_angles = initial_states[:, 0]
+        next_poses, next_angles = tricycle_kinematic_step(
+            pose, current_wheel_angles, dt, control_signals,
+            max_front_wheel_angle,
+            front_wheel_from_axis,
+            max_front_wheel_speed,
+            front_column_model_p_gain,
+            model_front_column_pid=False
+        )
+        next_state = initial_states.copy()
+        next_state[:, 0] = next_angles[:]
+        next_state[:, 1] = control_signals[:, 0]
+        next_state[:, 2] = 0.  # angular velocity is ignored
+        return next_poses, next_state
+
+
+    pose_evolution, state_evolution, control_evolution, refine_dt = control_choices_tricycle_exhaustive(
+        forward_model,
+        wheel_angle=0.,
+        max_v=target_v,
+        exhausitve_dt=refine_dt*front_wheel_rotation_speedup,
+        refine_dt=refine_dt,
+        n_steps=1,
+        theta_samples=tricycle_angle_samples,
+        v_samples=v_samples,
+        extra_copy_n_steps=primitives_duration-1,
+        max_front_wheel_angle=max_front_wheel_angle,
+        max_front_wheel_speed=max_front_wheel_speed
+    )
+
+    primitives = []
+    for start_theta_discrete in range(number_of_angles):
+        current_primitive_cells = []
+        for primitive_id, (ego_poses, controls) in enumerate(zip(pose_evolution, control_evolution)):
+            ego_poses = np.vstack(([[0., 0., 0.]], ego_poses))
+            start_angle = angle_discrete_to_cont(start_theta_discrete, number_of_angles)
+            poses = from_egocentric_to_global(
+                ego_poses,
+                ego_pose_in_global_coordinates=np.array([0., 0., start_angle]))
+
+            # to model precision loss while converting to .mprim file, we round it here
+            poses = np.around(poses, decimals=4)
+            last_pose = poses[-1]
+            end_cell = np.zeros((3,), dtype=int)
+
+            center_cell_shift = pixel_to_world_centered(np.zeros((2,)), np.zeros((2,)), resolution)
+            end_cell[:2] = world_to_pixel_sbpl(center_cell_shift + last_pose[:2], np.zeros((2,)), resolution)
+            perfect_last_pose = np.zeros((3,), dtype=float)
+            end_cell[2] = angle_cont_to_discrete(last_pose[2], number_of_angles)
+
+            current_primitive_cells.append(tuple(end_cell))
+
+            perfect_last_pose[:2] = pixel_to_world_centered(end_cell[:2], np.zeros((2,)), resolution)
+            perfect_last_pose[2] = angle_discrete_to_cont(end_cell[2], number_of_angles)
+
+            # # penalize slow movement forward and sudden jerns
+            # if controls[0, 0] < target_v*0.5 or abs(controls[0, 1]) > 0.5*target_w:
+            #     action_cost_multiplier = 100
+            # else:
+            #     action_cost_multiplier = 1
+
+            action_cost_multiplier = 1
 
             primitive = MotionPrimitive(
                 primitive_id=primitive_id,
