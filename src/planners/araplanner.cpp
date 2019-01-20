@@ -34,6 +34,7 @@
 #include <cmath>
 #include <limits>
 #include <sstream>
+#include <iostream>
 
 #include <sbpl/discrete_space_information/environment.h>
 #include <sbpl/utils/heap.h>
@@ -41,6 +42,11 @@
 #include <sbpl/utils/list.h>
 
 using namespace std;
+
+std::vector<int> _goalsID;
+unsigned long int _track_compute=0;
+bool _goal_found=false;
+bool _start_search=false;
 
 ARAPlanner::ARAPlanner(DiscreteSpaceInformation* environment, bool bSearchForward)
 {
@@ -138,8 +144,8 @@ CMDPSTATE* ARAPlanner::CreateState(int stateID, ARASearchStateSpace_t* pSearchSt
 CMDPSTATE* ARAPlanner::GetState(int stateID, ARASearchStateSpace_t* pSearchStateSpace)
 {
     if (stateID >= (int)environment_->StateID2IndexMapping.size()) {
-        std::stringstream ss("ERROR int GetState: stateID ");
-        ss << stateID << " is invalid";
+        std::stringstream ss;
+        ss << "ERROR int GetState: stateID " << stateID << " is invalid" << std::endl;
         throw SBPL_Exception(ss.str());
     }
 
@@ -297,6 +303,26 @@ void ARAPlanner::UpdateSuccs(ARAState* state, ARASearchStateSpace_t* pSearchStat
     ARAState *succstate;
 
     environment_->GetSuccs(state->MDPstate->StateID, &SuccIDV, &CostV);
+
+
+    //MULTIGOAL
+    if ( _track_compute == 0 && _goal_found==false) {
+        for (int sind = 0; sind < (int)SuccIDV.size(); sind++) {
+            for (int k=0;k<_goalsID.size();k++) {
+                if ( _goalsID[k] == SuccIDV[sind] ) {
+                    _goal_found=true;
+
+                    //set_goal(_goalsID[k]);
+                    SetSearchGoalState(_goalsID[k], pSearchStateSpace_);
+
+                    ARAState* searchgoalstate = (ARAState*)(pSearchStateSpace->searchgoalstate->PlannerSpecificData);
+                    if (searchgoalstate->callnumberaccessed != pSearchStateSpace->callnumber) {
+                        ReInitializeSearchStateInfo(searchgoalstate, pSearchStateSpace);
+                    }
+                }
+            }
+        }
+    }
 
     //iterate through predecessors of s
     for (int sind = 0; sind < (int)SuccIDV.size(); sind++) {
@@ -652,15 +678,20 @@ int ARAPlanner::SetSearchGoalState(int SearchGoalStateID, ARASearchStateSpace_t*
     {
         pSearchStateSpace->searchgoalstate = GetState(SearchGoalStateID, pSearchStateSpace);
 
-        //should be new search iteration
-        pSearchStateSpace->eps_satisfied = INFINITECOST;
-        pSearchStateSpace->bNewSearchIteration = true;
-        pSearchStateSpace_->eps = this->finitial_eps;
+        // MULTIGOAL
+        if ( _track_compute == 0 && _goal_found == false) {
+            // Skip
+        } else {
+            //should be new search iteration
+            pSearchStateSpace->eps_satisfied = INFINITECOST;
+            pSearchStateSpace->bNewSearchIteration = true;
+            pSearchStateSpace_->eps = this->finitial_eps;
 
 #if USE_HEUR
-        //recompute heuristic for the heap if heuristics is used
-        pSearchStateSpace->bReevaluatefvals = true;
+            //recompute heuristic for the heap if heuristics is used
+            pSearchStateSpace->bReevaluatefvals = true;
 #endif
+        }
     }
 
     return 1;
@@ -899,6 +930,8 @@ vector<int> ARAPlanner::GetSearchPath(ARASearchStateSpace_t* pSearchStateSpace, 
 bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, vector<int>& pathIds, int & PathCost,
                         bool bFirstSolution, bool bOptimalSolution, double MaxNumofSecs)
 {
+    _start_search=true;
+
     CKey key;
     TimeStarted = clock();
     searchexpands = 0;
@@ -967,6 +1000,7 @@ bool ARAPlanner::Search(ARASearchStateSpace_t* pSearchStateSpace, vector<int>& p
 
         //improve or compute path
         if (ImprovePath(pSearchStateSpace, MaxNumofSecs) == 1) {
+            _track_compute+=1;
             pSearchStateSpace->eps_satisfied = pSearchStateSpace->eps;
         }
 
@@ -1097,6 +1131,13 @@ int ARAPlanner::set_goal(int goal_stateID)
     SBPL_PRINTF("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
 
+    _goalsID.clear();
+    _track_compute=0;
+    _goal_found=false;
+    _start_search=false;
+
+    _goalsID.push_back(goal_stateID);
+
     if (bforwardsearch) {
         if (SetSearchGoalState(goal_stateID, pSearchStateSpace_) != 1) {
             SBPL_ERROR("ERROR: failed to set search goal state\n");
@@ -1111,6 +1152,27 @@ int ARAPlanner::set_goal(int goal_stateID)
     }
 
     return 1;
+}
+
+int ARAPlanner::set_multiple_goals(const std::vector<int>& goal_stateIDs) {
+
+    _goalsID.clear();
+    _track_compute=0;
+    _goal_found=false;
+    _start_search=false;
+
+    if (!bforwardsearch) {
+        throw SBPL_Exception("Multigoal search is supported only for forward search");
+    }
+
+    for (int i = 0; i < goal_stateIDs.size(); i++) {
+        _goalsID.push_back(i);
+
+        if (SetSearchGoalState(i, pSearchStateSpace_) != 1) {
+            SBPL_ERROR("ERROR: failed to set search goal state\n");
+            return 0;
+        }
+    }
 }
 
 int ARAPlanner::set_start(int start_stateID)
@@ -1152,11 +1214,21 @@ int ARAPlanner::force_planning_from_scratch()
 
     pSearchStateSpace_->bReinitializeSearchStateSpace = true;
 
+    _goalsID.clear();
+    _track_compute=0;
+    _goal_found=false;
+    _start_search=false;
+
     return 1;
 }
 
 int ARAPlanner::force_planning_from_scratch_and_free_memory()
 {
+    _goalsID.clear();
+    _track_compute=0;
+    _goal_found=false;
+    _start_search=false;
+
     SBPL_PRINTF("planner: forceplanfromscratch set\n");
     int start_id = -1;
     int goal_id = -1;

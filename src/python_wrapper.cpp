@@ -388,6 +388,33 @@ public:
         }
     }
 
+    void set_multiple_goals(const py::safe_array<double> goal_poses_array, EnvironmentNAVXYTHETALATWrapper& envWrapper) {
+
+        auto goal_poses = goal_poses_array.unchecked<2>();
+        std::vector<int> state_idGoals;
+        for (int i=0; i< goal_poses_array.shape(0); ++i) {
+            // update the environment
+            int newgoalstateID = envWrapper.env().SetGoal(goal_poses(i, 0), goal_poses(i, 1), goal_poses(i, 2));
+            if (newgoalstateID < 0) {
+                continue;
+            }
+            state_idGoals.push_back(newgoalstateID);
+        }
+        if (state_idGoals.size() == 0) {
+            throw SBPL_Exception("No valid goals were found");
+        }
+
+        // update the planner
+        if (_pPlanner->set_multiple_goals(state_idGoals) == 0) {
+            throw SBPL_Exception("ERROR: failed to set multiple goals pose in the planner");
+        }
+
+    }
+
+    void reset() {
+        _pPlanner->force_planning_from_scratch_and_free_memory();
+    }
+
 private:
     SBPLPlanner* _pPlanner;
 };
@@ -546,6 +573,8 @@ PYBIND11_MODULE(_sbpl_module, m) {
         )
         .def("set_start", &SBPLPlannerWrapper::set_start)
         .def("set_goal", &SBPLPlannerWrapper::set_goal)
+        .def("set_multiple_goals", &SBPLPlannerWrapper::set_multiple_goals)
+        .def("reset", &SBPLPlannerWrapper::reset)
     ;
 
     py::class_<ARAPlannerWrapper>(m, "ARAPlanner", base_planner)

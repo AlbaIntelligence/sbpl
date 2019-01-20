@@ -158,6 +158,7 @@ public:
      * \brief set the goal state
      */
     virtual int set_goal(int goal_stateID);
+    virtual int set_multiple_goals(const std::vector<int>& goal_stateID);
 
     /**
      * \brief set the start state

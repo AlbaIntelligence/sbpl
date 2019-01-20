@@ -219,6 +219,11 @@ public:
      * \brief sets the goal of search (planner will automatically decide whether it needs to replan from scratch)
      */
     virtual int set_goal(int goal_stateID) = 0;
+    virtual int set_multiple_goals(const std::vector<int>& goal_stateID)   {
+        SBPL_ERROR("setting multiple goals is unimplemented for this planner\n");
+        return 0;
+    }
+
 
     /**
      * \brief sets the start of search (planner will automatically decide whether it needs to replan from scratch)
