@@ -312,13 +312,18 @@ public:
         }
     }
 
-    py::tuple replan(EnvironmentNAVXYTHETALATWrapper& envWrapper, double allocated_time_secs_foreachplan) {
+    py::tuple replan(
+            EnvironmentNAVXYTHETALATWrapper& envWrapper,
+            double allocated_time_secs_foreachplan,
+            double final_eps) {
         double plan_time, solution_epsilon;
         std::vector<sbpl_xy_theta_pt_t> xythetaPath;
         std::vector<sbpl_xy_theta_cell_t> xythetaCellPath;
 
         double TimeStarted = clock();
         std::vector<int> solution_stateIDs_V;
+
+        _pPlanner->set_finalsolution_eps(final_eps);
 
         bool bPlanExists = (_pPlanner->replan(allocated_time_secs_foreachplan, &solution_stateIDs_V) == 1);
 
@@ -536,7 +541,8 @@ PYBIND11_MODULE(_sbpl_module, m) {
         .def("apply_environment_changes", &SBPLPlannerWrapper::apply_environment_changes)
         .def("replan", &SBPLPlannerWrapper::replan,
             "environment"_a,
-            "allocated_time"_a
+            "allocated_time"_a,
+            "final_epsilon"_a
         )
         .def("set_start", &SBPLPlannerWrapper::set_start)
         .def("set_goal", &SBPLPlannerWrapper::set_goal)
