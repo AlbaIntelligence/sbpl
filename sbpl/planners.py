@@ -40,7 +40,8 @@ def perform_single_planning(
         target_w = 1.0,
         allocated_time=np.inf,
         cost_scaling_factor = 4.,
-        debug=False):
+        debug=False,
+        use_full_kernels=False):
 
     assert costmap.get_resolution() == motion_primitives.get_resolution()
 
@@ -73,7 +74,9 @@ def perform_single_planning(
         footprint,
         motion_primitives,
         inflated_costmap.get_data(),
-        params)
+        params,
+        use_full_kernels=use_full_kernels
+    )
 
     planner = create_planner(planner_name, environment, forward_search)
 
