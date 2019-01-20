@@ -522,3 +522,17 @@ def circumscribed_radius(footprint):
     of a footprint (n x 2 numpy array of consecutive vertices)
     '''
     return np.amax(np.linalg.norm(footprint, axis=1))
+
+
+def get_circular_footprint(robot_radius, map_resolution):
+    pixel_diameter = 2 * int(robot_radius / map_resolution + 0.5) + 1
+    kernel = np.zeros((pixel_diameter, pixel_diameter), dtype = np.uint8)
+    cv2.circle(kernel, (pixel_diameter // 2, pixel_diameter // 2), pixel_diameter // 2, 255, -1)
+    return kernel
+
+
+def compute_robot_area(resolution, robot_footprint):
+    '''
+    Computes robot footprint area in pixels
+    '''
+    return float(np.count_nonzero(get_pixel_footprint(0., robot_footprint, resolution)))
