@@ -21,7 +21,7 @@ class EnvNAVXYTHETALAT_InitParms(sbpl._sbpl_module.EnvNAVXYTHETALAT_InitParms):
 class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
 
     def __init__(self, footprint, motion_primitives, costmap_data, env_params,
-                 override_primitive_kernels=True):
+                 override_primitive_kernels=True, use_full_kernels=False):
         primitives_folder = tempfile.mkdtemp()
         try:
             dump_motion_primitives(motion_primitives, os.path.join(primitives_folder, 'primitives.mprim'))
@@ -34,7 +34,7 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
                 not override_primitive_kernels
             )
             if override_primitive_kernels:
-                self._override_primitive_kernels(motion_primitives, footprint)
+                self._override_primitive_kernels(motion_primitives, footprint, use_full_kernels)
 
         finally:
             shutil.rmtree(primitives_folder)
@@ -47,7 +47,7 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
         params = self.get_params()
         return MotionPrimitives(params.cellsize_m, params.numThetas, self.get_motion_primitives_list())
 
-    def _override_primitive_kernels(self, motion_primitives, footprint):
+    def _override_primitive_kernels(self, motion_primitives, footprint, use_full_kernels):
         resolution = motion_primitives.get_resolution()
         print('Setting up motion primitive kernels..')
         for p in motion_primitives.get_primitives():
@@ -77,7 +77,6 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
             _, idx = np.unique(row_view, return_index=True)
             full_cv_kernel = np.ascontiguousarray(full_cv_kernel[idx])
 
-            use_full_kernels = False
             if use_full_kernels:
                 self.set_primitive_collision_pixels(p.starttheta_c, p.motprimID, full_cv_kernel)
             else:
