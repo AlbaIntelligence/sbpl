@@ -357,11 +357,12 @@ public:
         return py::make_tuple(xytheta_path_array, xytheta_cell_path_array, action_array, plan_time, solution_epsilon);
     }
 
-    void set_start(const py::safe_array<double> start_pose_array, EnvironmentNAVXYTHETALATWrapper& envWrapper) {
+    void set_start(const py::safe_array<double> start_pose_array, EnvironmentNAVXYTHETALATWrapper& envWrapper,
+                   bool check_collisions) {
 
         auto start_pose = start_pose_array.unchecked<1>();
         // update the environment
-        int newstartstateID = envWrapper.env().SetStart(start_pose(0), start_pose(1), start_pose(2));
+        int newstartstateID = envWrapper.env().SetStart(start_pose(0), start_pose(1), start_pose(2), check_collisions);
                 // update the planner
         if (newstartstateID < 0) {
             throw SBPL_Exception("Invalid start configuration");
@@ -373,11 +374,12 @@ public:
         }
     }
 
-    void set_goal(const py::safe_array<double> goal_pose_array, EnvironmentNAVXYTHETALATWrapper& envWrapper) {
+    void set_goal(const py::safe_array<double> goal_pose_array, EnvironmentNAVXYTHETALATWrapper& envWrapper,
+                  bool check_collisions) {
 
         auto goal_pose = goal_pose_array.unchecked<1>();
         // update the environment
-        int newgoalstateID = envWrapper.env().SetGoal(goal_pose(0), goal_pose(1), goal_pose(2));
+        int newgoalstateID = envWrapper.env().SetGoal(goal_pose(0), goal_pose(1), goal_pose(2), check_collisions);
         if (newgoalstateID < 0) {
             throw SBPL_Exception("Invalid goal configuration");
         }

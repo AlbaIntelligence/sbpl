@@ -2307,7 +2307,7 @@ void EnvironmentNAVXYTHETALAT::ConvertStateIDPathintoXYThetaPath(
 }
 
 // returns the stateid if success, and -1 otherwise
-int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad)
+int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad, bool check_collisions)
 {
     int x = CONTXY2DISC(x_m, EnvNAVXYTHETALATCfg.cellsize_m);
     int y = CONTXY2DISC(y_m, EnvNAVXYTHETALATCfg.cellsize_m);
@@ -2320,8 +2320,8 @@ int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad)
         return -1;
     }
 
-    if (!IsValidConfiguration(x, y, theta)) {
-        SBPL_ERROR("IsValidConfiguration=false: goal configuration is invalid: %d %d %d\n", x, y, theta);
+    if (check_collisions && !IsValidConfiguration(x, y, theta)) {
+        // SBPL_ERROR("IsValidConfiguration=false: goal configuration is invalid: %d %d %d\n", x, y, theta);
         return -1;
     }
 
@@ -2350,7 +2350,7 @@ int EnvironmentNAVXYTHETALAT::SetGoal(double x_m, double y_m, double theta_rad)
 }
 
 // returns the stateid if success, and -1 otherwise
-int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad)
+int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad, bool check_collisions)
 {
     int x = CONTXY2DISC(x_m, EnvNAVXYTHETALATCfg.cellsize_m);
     int y = CONTXY2DISC(y_m, EnvNAVXYTHETALATCfg.cellsize_m);
@@ -2363,7 +2363,7 @@ int EnvironmentNAVXYTHETALAT::SetStart(double x_m, double y_m, double theta_rad)
 
     SBPL_PRINTF("env: setting start to %.3f %.3f %.3f (%d %d %d)\n", x_m, y_m, theta_rad, x, y, theta);
 
-    if (!IsValidConfiguration(x, y, theta)) {
+    if (check_collisions && !IsValidConfiguration(x, y, theta)) {
         SBPL_ERROR("IsValidConfiguration=false: start configuration %d %d %d is invalid\n", x, y, theta);
         return -1;
     }
@@ -2672,14 +2672,17 @@ void EnvironmentNAVXYTHETALAT::GetPreds(
 
         EnvNAVXYTHETALATAction_t* nav3daction = actionsV->at(aind);
 
-                    if (nav3daction->starttheta < 0) {
-                throw SBPL_Exception("10");
-            }
-
-
         int predX = HashEntry->X - nav3daction->dX;
         int predY = HashEntry->Y - nav3daction->dY;
         int predTheta = nav3daction->starttheta;
+
+        double actionThetaRad = DiscTheta2ContNew(predTheta);
+        double lowerLimit = 3.490658503988659;
+        double higherLimit = 5.934119456780721;
+        if (actionThetaRad < lowerLimit || actionThetaRad>higherLimit) {
+            //SBPL_ERROR("SKIPPING PRED ANGLE %f", DiscTheta2ContNew(predTheta));
+            continue;
+        }
 
         // skip the invalid cells
         if (!IsValidCell(predX, predY)) {
@@ -2695,10 +2698,6 @@ void EnvironmentNAVXYTHETALAT::GetPreds(
         EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
         if ((OutHashEntry = (this->*GetHashEntry)(predX, predY, predTheta)) == NULL) {
             // have to create a new entry
-                        if (predTheta < 0) {
-                throw SBPL_Exception("9");
-            }
-
             OutHashEntry = (this->*CreateNewHashEntry)(predX, predY, predTheta);
         }
 
@@ -2761,9 +2760,6 @@ void EnvironmentNAVXYTHETALAT::SetAllActionsandAllOutcomes(CMDPSTATE* state)
         EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
         if ((OutHashEntry = (this->*GetHashEntry)(newX, newY, newTheta)) == NULL) {
             // have to create a new entry
-            if (newTheta < 0) {
-                throw SBPL_Exception("1");
-            }
             OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
         }
         action->AddOutcome(OutHashEntry->stateID, cost, 1.0);

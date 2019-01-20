@@ -244,7 +244,7 @@ void navigationIteration(
         starttheta = DiscTheta2Cont(newtheta, params.numThetas);
 
         // update the environment
-        int newstartstateID = environment_navxythetalat.SetStart(startx, starty, starttheta);
+        int newstartstateID = environment_navxythetalat.SetStart(startx, starty, starttheta, true);
 
         // update the planner
         if (planner->set_start(newstartstateID) == 0) {
