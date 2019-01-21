@@ -519,13 +519,17 @@ public:
         costs.reserve(_primitive_cells.size());
 
         auto p_costmap = &(costmap_array.unchecked<2>()(0, 0));
+        unsigned int max_size = costmap_array.shape(0)*costmap_array.shape(1);
         for (int prim_i = 0; prim_i < _primitive_cells.size(); prim_i ++) {
             const std::vector<sbpl_2Dcell_t>& cells = _primitive_cells.at(prim_i);
             double cost = 0;
             for (int cell_i = 0; cell_i < cells.size(); cell_i ++) {
                 // GetActionCost code, but a bit cheaper
                 sbpl_2Dcell_t cell = cells.at(cell_i);
-                cost += p_costmap[cell.y*costmap_array.shape(0) + cell.x];
+                unsigned int address = cell.y*costmap_array.shape(0) + cell.x;
+                if (address < max_size) {
+                    cost += p_costmap[address];
+                }
             }
             costs.push_back(cost);
         }
@@ -669,15 +673,21 @@ double CostmapModel_lineCost(
         int cell_x = line.getX();
         int cell_y = line.getY();
 
+        unsigned char point_cost;
+
         if (cell_x <0 || cell_y <0) {
-            throw SBPL_Exception("Query is smaller than zero");
+            // throw SBPL_Exception("Query is smaller than zero");
+            point_cost = costmap(0, 0);
+        }
+        else if (cell_x  >= size_x || cell_y >= size_y) {
+            // SBPL_ERROR("Query is larger than max");
+            // continue;
+            point_cost = costmap(size_y-1, size_x-1);
+        } else {
+            point_cost = costmap(cell_y, cell_x);
         }
 
-        if (cell_x  >= size_x || cell_y >= size_y) {
-            throw SBPL_Exception("Query is larger than max");
-        }
-
-        unsigned char point_cost = costmap(cell_y, cell_x);
+        // unsigned char point_cost = costmap(cell_y, cell_x);
         //if the cell is in an obstacle the path is invalid
         //if(cost == LETHAL_OBSTACLE || cost == NO_INFORMATION){
         if(point_cost == 254 || point_cost == 255){
