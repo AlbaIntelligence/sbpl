@@ -951,10 +951,10 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<int>& p
         if (retVal == 1) {
             //printf("suboptimality=%f expands=%d g(searchgoal)=%d loop_time=%.3f time_elapsed=%.3f memoryCounter=%d\n", pSearchStateSpace->eps_satisfied, searchexpands - prevexpands, ((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g,double(clock()-loop_time)/CLOCKS_PER_SEC, double(clock() - TimeStarted)/CLOCKS_PER_SEC, MaxMemoryCounter);
 
-            printf("suboptimality=%f g(searchgoal)=%d time_elapsed=%.3f memoryCounter=%d\n",
-                   pSearchStateSpace->eps_satisfied,
-                   ((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g, double(clock()
-                       - TimeStarted) / CLOCKS_PER_SEC, MaxMemoryCounter);
+//            printf("suboptimality=%f g(searchgoal)=%d time_elapsed=%.3f memoryCounter=%d\n",
+//                   pSearchStateSpace->eps_satisfied,
+//                   ((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g, double(clock()
+//                       - TimeStarted) / CLOCKS_PER_SEC, MaxMemoryCounter);
 
             //printf("states expanded: %d\t states considered: %d\t time elapsed: %f\n",searchexpands - prevexpands, pSearchStateSpace->heap->currentsize, double(clock() - TimeStarted)/CLOCKS_PER_SEC);
         }
@@ -977,27 +977,27 @@ bool anaPlanner::Search(anaSearchStateSpace_t* pSearchStateSpace, vector<int>& p
     fflush(fDeb);
 #endif
 
-    printf("Suboptimality = %.4f\n", pSearchStateSpace->eps_satisfied);
+    // printf("Suboptimality = %.4f\n", pSearchStateSpace->eps_satisfied);
 
     PathCost = ((anaState*)pSearchStateSpace->searchgoalstate->PlannerSpecificData)->g;
     MaxMemoryCounter += environment_->StateID2IndexMapping.size() * sizeof(int);
 
-    printf("MaxMemoryCounter = %d\n", MaxMemoryCounter);
+    // printf("MaxMemoryCounter = %d\n", MaxMemoryCounter);
 
     int solcost = INFINITECOST;
     bool ret = false;
     if (PathCost == INFINITECOST) {
-        printf("could not find a solution\n");
+        // printf("could not find a solution\n");
         ret = false;
     }
     else {
-        printf("solution is found\n");
+        // printf("solution is found\n");
         pathIds = GetSearchPath(pSearchStateSpace, solcost);
         ret = true;
     }
 
-    printf("total expands this call = %d, planning time = %.3f secs, solution cost=%d\n", searchexpands, (clock()
-        - TimeStarted) / ((double)CLOCKS_PER_SEC), solcost);
+//    printf("total expands this call = %d, planning time = %.3f secs, solution cost=%d\n", searchexpands, (clock()
+//        - TimeStarted) / ((double)CLOCKS_PER_SEC), solcost);
 
     //fprintf(fStat, "%d %d\n", searchexpands, solcost);
 
@@ -1025,13 +1025,13 @@ int anaPlanner::replan(double allocated_time_secs, vector<int>* solution_stateID
     bool bOptimalSolution = false;
     *psolcost = 0;
 
-    printf("planner: replan called (bFirstSol=%d, bOptSol=%d)\n", bFirstSolution, bOptimalSolution);
+    // printf("planner: replan called (bFirstSol=%d, bOptSol=%d)\n", bFirstSolution, bOptimalSolution);
 
     //plan
     bFound = Search(pSearchStateSpace_, pathIds, PathCost, bFirstSolution, bOptimalSolution, allocated_time_secs);
     if (!bFound)
     {
-        printf("failed to find a solution\n");
+        // printf("failed to find a solution\n");
     }
 
     //copy the solution
@@ -1044,7 +1044,7 @@ int anaPlanner::replan(double allocated_time_secs, vector<int>* solution_stateID
 
 int anaPlanner::set_goal(int goal_stateID)
 {
-    printf("planner: setting goal to %d\n", goal_stateID);
+    // printf("planner: setting goal to %d\n", goal_stateID);
     environment_->PrintState(goal_stateID, true, stdout);
 
     if (bforwardsearch) {
@@ -1065,7 +1065,7 @@ int anaPlanner::set_goal(int goal_stateID)
 
 int anaPlanner::set_start(int start_stateID)
 {
-    printf("planner: setting start to %d\n", start_stateID);
+    // printf("planner: setting start to %d\n", start_stateID);
     environment_->PrintState(start_stateID, true, stdout);
 
     if (bforwardsearch) {

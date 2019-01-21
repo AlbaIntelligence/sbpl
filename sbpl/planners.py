@@ -25,6 +25,8 @@ def create_planner(planner_name, environment, forward_search):
         'arastar': sbpl._sbpl_module.ARAPlanner,
         'adstar': sbpl._sbpl_module.ADPlanner,
         'anastar': sbpl._sbpl_module.anaPlanner,
+        'lazy_arastar': sbpl._sbpl_module.LazyARAPlanner,
+        'rstar': sbpl._sbpl_module.RSTARPlanner
     }[planner_name](environment, forward_search)
 
 

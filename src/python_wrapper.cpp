@@ -412,6 +412,8 @@ private:
 typedef SpecificPlannerWrapper<ARAPlanner> ARAPlannerWrapper;
 typedef SpecificPlannerWrapper<ADPlanner> ADPlannerWrapper;
 typedef SpecificPlannerWrapper<anaPlanner> anaPlannerWrapper;
+typedef SpecificPlannerWrapper<LazyARAPlanner> LazyARAPlannerWrapper;
+typedef SpecificPlannerWrapper<RSTARPlanner> RSTARPlannerWrapper;
 
 
 class IncrementalSensingWrapper {
@@ -559,6 +561,14 @@ PYBIND11_MODULE(_sbpl_module, m) {
     ;
 
     py::class_<anaPlannerWrapper>(m, "anaPlanner", base_planner)
+       .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())
+    ;
+
+    py::class_<LazyARAPlannerWrapper>(m, "LazyARAPlanner", base_planner)
+       .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())
+    ;
+
+    py::class_<RSTARPlannerWrapper>(m, "RSTARPlanner", base_planner)
        .def(py::init<EnvironmentNAVXYTHETALATWrapper&, bool>())
     ;
 
