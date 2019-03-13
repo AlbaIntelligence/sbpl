@@ -7,12 +7,12 @@ import numpy as np
 import os
 import cv2
 
-from bc_gym_planning_env.utilities.coordinate_transformations import diff_angles, normalize_angle
+from bc_gym_planning_env.utilities.coordinate_transformations import diff_angles, normalize_angle, \
+    from_egocentric_to_global
 from bc_gym_planning_env.robot_models.tricycle_model import tricycle_kinematic_step
 
 from sbpl.utilities.control_policies.diff_drive_contol_policies import control_choices_diff_drive_exhaustive
 from sbpl.utilities.control_policies.tricycle_control_policies import control_choices_tricycle_exhaustive
-from sbpl.utilities.coordinate_transformations import from_egocentric_to_global
 from sbpl.utilities.costmap_2d_python import freeze_array
 from sbpl.utilities.differential_drive import kinematic_body_pose_motion_step
 from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_arrow

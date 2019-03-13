@@ -4,24 +4,10 @@ from __future__ import division
 
 import numpy as np
 import cv2
+from bc_gym_planning_env.utilities.opencv_utils import single_threaded_opencv
 
 from sbpl.utilities.costmap_2d_python import CostMap2D
 from sbpl.utilities.path_tools import inscribed_radius, circumscribed_radius
-
-
-class single_threaded_opencv(object):
-    '''
-    Context manager that disables IPP for deterministic results and sets number of threads to 0 to avoid
-    hanging in multiprocessing forks
-    '''
-    def __enter__(self):
-        cv2.ipp.setUseIPP(flag=False)
-        self._number_of_threads = cv2.getNumThreads()
-        cv2.setNumThreads(0)
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        cv2.setNumThreads(self._number_of_threads)
 
 
 def distance_transform(img):
