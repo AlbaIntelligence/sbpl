@@ -4,7 +4,7 @@ from __future__ import division
 
 import numpy as np
 
-from sbpl.utilities.path_tools import normalize_angle, diff_angles
+from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle, diff_angles
 
 
 def kinematic_body_pose_motion_step(pose, linear_velocity, angular_velocity, dt):

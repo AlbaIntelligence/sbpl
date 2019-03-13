@@ -2,13 +2,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle
 from builtins import range
 import numpy as np
 import itertools
 import logging
 
 from sbpl.utilities.control_policies.common_control_policies import statefull_branching, copy_control_policy
-from sbpl.utilities.path_tools import normalize_angle
 
 
 def gen_vw_step_choices(min_v, max_v, max_w, v_samples, w_samples_in_each_direction, enable_turn_in_place):

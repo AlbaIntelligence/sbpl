@@ -7,6 +7,8 @@ import numpy as np
 
 import cv2
 
+from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle
+
 
 def get_blit_mask(patch, im, x, y):
     '''
@@ -326,21 +328,6 @@ def orient_path(path, robot_pose=None, final_pose=None, max_movement_for_turn_in
         oriented_path[i, 2] = (oriented_path[left_index, 2] * (right_index - i) +
                                oriented_path[right_index, 2] * (i - left_index)) / (right_index - left_index)
     return oriented_path
-
-
-def diff_angles(a1, a2):
-    '''
-    normalized a1 - a2
-    '''
-    return normalize_angle(a1-a2)
-
-
-def normalize_angle(z):
-    '''
-    Normalize angles to -pi to pi
-    # http://stackoverflow.com/questions/15927755/opposite-of-numpy-unwrap
-    '''
-    return (np.array(z) + np.pi) % (2*np.pi) - np.pi
 
 
 def normalize_angle_0_2pi(angle):

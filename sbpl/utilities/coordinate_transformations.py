@@ -2,29 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 import numpy as np
-
-from sbpl.utilities.path_tools import normalize_angle
-
-
-def homogenize(points):
-    # type: (array(n_points,n_dim)[float]) -> array(n_points,n_dim+1)[float]
-    """
-    Add column of ones to NxM array to end up with Nx(M+1) array
-    """
-    return np.hstack((points, np.ones((points.shape[0], 1))))
-
-
-def rotation_matrix(rotation):
-    """
-    Construct 2D rotation matrix.
-
-    :param: rotation: rotation [radians]
-    :return: 2x2 rotation matrix.
-    """
-    c = np.cos(rotation)
-    s = np.sin(rotation)
-    return np.array([[c, -s],
-                     [s, c]])
+from bc_gym_planning_env.utilities.coordinate_transformations import homogenize, normalize_angle, rotation_matrix
 
 
 def transform_to_homogeneous_matrix(transform):
