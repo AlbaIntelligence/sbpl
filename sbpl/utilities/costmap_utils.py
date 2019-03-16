@@ -2,7 +2,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-import cv2
 import numpy as np
 
 from sbpl.utilities.costmap_2d_python import CostMap2D

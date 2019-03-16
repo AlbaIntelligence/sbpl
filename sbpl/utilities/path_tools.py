@@ -3,55 +3,8 @@ from __future__ import absolute_import
 from __future__ import division
 
 import numpy as np
-
-import cv2
-
 from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle
-
-
-def get_pixel_footprint(angle, robot_footprint, map_resolution, fill=True):
-    '''
-    Return a binary image of a given robot footprint, in pixel coordinates,
-    rotated over the appropriate angle range.
-    Point (0, 0) in world coordinates is in the center of the image.
-    angle_range: if a 2-tuple, the robot footprint will be rotated over this range;
-        the returned footprint results from superimposing the footprint at each angle.
-        If a single number, a single footprint at that angle will be returned
-    robot_footprint: n x 2 numpy array with ROS-style footprint (x, y coordinates),
-        in metric units, oriented at 0 angle
-    map_resolution:
-    :param angle Float: orientation of the robot
-    :param robot_footprint array(N, 2)[float64]: n x 2 numpy array with ROS-style footprint (x, y coordinates),
-        in metric units, oriented at 0 angle
-    :param map_resolution Float: length in metric units of the side of a pixel
-    :param fill bool: if True, the footprint will be solid; if False, only the contour will be traced
-    :return array(K, M)[uint8]: image of the footprint drawn on the image in white
-    '''
-    assert not isinstance(angle, tuple)
-    angles = [angle]
-    m = np.empty((2, 2, len(angles)))  # stack of 2 x 2 matrices to rotate the footprint across all desired angles
-    c, s = np.cos(angles), np.sin(angles)
-    m[0, 0, :], m[0, 1, :], m[1, 0, :], m[1, 1, :] = (c, -s, s, c)
-    rot_pix_footprints = np.rollaxis(np.dot(robot_footprint / map_resolution, m), -1)  # n_angles x n_footprint_corners x 2
-    # From all the possible footprints, get the outer corner
-    footprint_corner = np.maximum(np.amax(rot_pix_footprints.reshape(-1, 2), axis=0),
-                                  -np.amin(rot_pix_footprints.reshape(-1, 2), axis=0))
-    pic_half_size = np.ceil(footprint_corner).astype(np.int32)
-    int_footprints = np.round(rot_pix_footprints).astype(np.int32)
-
-    # int_footprints = np.floor(rot_pix_footprints).astype(np.int32)
-    # get unique int footprints to save time; using http://stackoverflow.com/questions/16970982/find-unique-rows-in-numpy-array
-    flat_int_footprints = int_footprints.reshape(len(angles), -1)
-    row_view = np.ascontiguousarray(flat_int_footprints).view(np.dtype((np.void, flat_int_footprints.dtype.itemsize * flat_int_footprints.shape[1])))
-    _, idx = np.unique(row_view, return_index=True)
-    unique_int_footprints = int_footprints[idx]
-    kernel = np.zeros(2 * pic_half_size[::-1] + 1, dtype=np.uint8)
-    for f in unique_int_footprints:
-        if fill:
-            cv2.fillPoly(kernel, [f + pic_half_size], (255, 255, 255))
-        else:
-            cv2.polylines(kernel, [f + pic_half_size], 1, (255, 255, 255))
-    return kernel
+from bc_gym_planning_env.utilities.path_tools import get_pixel_footprint
 
 
 def world_to_pixel_floor(world_coords, origin, resolution):
