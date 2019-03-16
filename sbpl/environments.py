@@ -9,8 +9,10 @@ import os
 import shutil
 import cv2
 import numpy as np
+
+from bc_gym_planning_env.utilities.path_tools import get_pixel_footprint
 from sbpl.motion_primitives import MotionPrimitives, dump_motion_primitives
-from sbpl.utilities.path_tools import pixel_to_world_centered, get_pixel_footprint, world_to_pixel_sbpl
+from sbpl.utilities.path_tools import pixel_to_world_centered, world_to_pixel_sbpl
 
 
 class EnvNAVXYTHETALAT_InitParms(sbpl._sbpl_module.EnvNAVXYTHETALAT_InitParms):

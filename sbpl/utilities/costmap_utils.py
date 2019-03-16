@@ -4,8 +4,9 @@ from __future__ import division
 
 import numpy as np
 
+from bc_gym_planning_env.utilities.path_tools import get_pixel_footprint
 from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.path_tools import get_pixel_footprint, world_to_pixel_sbpl
+from sbpl.utilities.path_tools import world_to_pixel_sbpl
 
 
 def pose_collides(pose, footprint, costmap_data, origin, resolution):

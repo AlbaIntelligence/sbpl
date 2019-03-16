@@ -4,7 +4,6 @@ from __future__ import division
 
 import numpy as np
 from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle
-from bc_gym_planning_env.utilities.path_tools import get_pixel_footprint
 
 
 def world_to_pixel_floor(world_coords, origin, resolution):
@@ -112,10 +111,3 @@ def angle_discrete_to_cont(angle_cell, num_angles):
     '''
     bin_size = 2*np.pi/num_angles
     return normalize_angle(angle_cell*bin_size)
-
-
-def compute_robot_area(resolution, robot_footprint):
-    '''
-    Computes robot footprint area in pixels
-    '''
-    return float(np.count_nonzero(get_pixel_footprint(0., robot_footprint, resolution)))
