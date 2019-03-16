@@ -2,12 +2,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
+from bc_gym_planning_env.utilities.path_tools import parallel_distances
 from builtins import range
 import numpy as np
 
 import cv2
 
-from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle
+from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle, diff_angles
 
 
 def get_blit_mask(patch, im, x, y):
@@ -431,14 +432,6 @@ def limit_path_index(path, max_dist, max_angle=np.inf, min_length=0):
     return cutoff
 
 
-def parallel_distances(pose, path_poses):
-    """
-    Signed projection of the vector from path_poses to pose along the
-    direction given by path_pose orientation
-    """
-    return np.cos(path_poses[:, 2]) * (pose[0] - path_poses[:, 0]) + np.sin(path_poses[:, 2]) * (pose[1] - path_poses[:, 1])
-
-
 def find_reached_indices(pose, segment, spatial_precision, angular_precision, parallel_distance_threshold=None):
     """
     Walk along the path and determine which point we have reached; a point
@@ -474,48 +467,6 @@ def find_last_reached(pose, segment, spatial_precision, angular_precision, paral
     if len(reached_idx):
         return reached_idx[-1]
     return None
-
-
-def distance_to_segments(point, segment_origins, segment_ends):
-    '''
-    Returns the shortest distance from the given point to a sequence
-    of segments defined by (n x 2) matrices segment_origins and segment_ends.
-    '''
-    segment_ends = np.asarray(segment_ends)
-    segment_origins = np.asarray(segment_origins)
-    v = segment_ends - segment_origins
-    v_norm_square = np.sum(v * v, axis=1)
-    # mu will be a scalar determining the position of the projection of point on each segment
-    # mu is normalized so that 0 is at the segment origin, 0.5 the midpoint, 1 the segment end
-    mu = np.sum((point - segment_origins) * v, axis=1) / (v_norm_square + 1e-12)
-    # clip mu to [0, 1]: if the projection is outside the segment, the closest point is the vertex
-    mu = np.clip(mu, 0., 1.)
-    closest_points = segment_origins + mu[:, None] * v
-    return np.hypot(point[0] - closest_points[:, 0], point[1] - closest_points[:, 1])
-
-
-def inscribed_radius(footprint):
-    '''
-    Returns the shortest distance from (0, 0) to any of the sides
-    of a footprint (n x 2 numpy array of consecutive vertices)
-    '''
-    segment_ends = np.roll(footprint, -1, axis=0)
-    return np.amin(distance_to_segments((0, 0), footprint, segment_ends))
-
-
-def circumscribed_radius(footprint):
-    '''
-    Returns the longest distance from (0, 0) to any of the sides
-    of a footprint (n x 2 numpy array of consecutive vertices)
-    '''
-    return np.amax(np.linalg.norm(footprint, axis=1))
-
-
-def get_circular_footprint(robot_radius, map_resolution):
-    pixel_diameter = 2 * int(robot_radius / map_resolution + 0.5) + 1
-    kernel = np.zeros((pixel_diameter, pixel_diameter), dtype = np.uint8)
-    cv2.circle(kernel, (pixel_diameter // 2, pixel_diameter // 2), pixel_diameter // 2, 255, -1)
-    return kernel
 
 
 def compute_robot_area(resolution, robot_footprint):

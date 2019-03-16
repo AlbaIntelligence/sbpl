@@ -4,10 +4,11 @@ from __future__ import division
 
 import numpy as np
 import cv2
+from bc_gym_planning_env.utilities.path_tools import circumscribed_radius, inscribed_radius
+
 from bc_gym_planning_env.utilities.opencv_utils import single_threaded_opencv
 
 from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.path_tools import inscribed_radius, circumscribed_radius
 
 
 def distance_transform(img):
