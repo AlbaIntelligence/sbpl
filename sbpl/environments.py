@@ -10,8 +10,7 @@ import shutil
 import cv2
 import numpy as np
 from sbpl.motion_primitives import MotionPrimitives, dump_motion_primitives
-from sbpl.utilities.map_drawing_utils import draw_robot
-from sbpl.utilities.path_tools import pixel_to_world_centered, get_pixel_footprint, world_to_pixel_sbpl, blit
+from sbpl.utilities.path_tools import pixel_to_world_centered, get_pixel_footprint, world_to_pixel_sbpl
 
 
 class EnvNAVXYTHETALAT_InitParms(sbpl._sbpl_module.EnvNAVXYTHETALAT_InitParms):
