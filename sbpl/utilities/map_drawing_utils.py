@@ -71,19 +71,6 @@ def add_wall_to_static_map(static_map, p0, p1, width=0.05, cost=CostMap2D.LETHAL
     _mark_wall_on_static_map(static_map, p0, p1, width, cost)
 
 
-def remove_wall_from_static_map(static_map, p0, p1, width=0.05):
-    _mark_wall_on_static_map(static_map, p0, p1, width, CostMap2D.FREE_SPACE)
-
-
-def prepare_canvas(shape):
-    """
-    Prepare canvas for drawing
-    :param shape (W, H): shape of the canvas
-    :return array(W, H, 3)[uint8]: BGR canvas for drawing
-    """
-    return np.full(shape + (3,), 0, dtype=np.uint8)
-
-
 def draw_world_map(img, costmap_data):
     '''
     Draws obstacles and unknowns

@@ -5,19 +5,11 @@ from __future__ import division
 import sbpl._sbpl_module
 import numpy as np
 import cv2
-import tempfile
-import os
-import shutil
 
-from bc_gym_planning_env.robot_models.differential_drive import kinematic_body_pose_motion_step
-
-from bc_gym_planning_env.utilities.coordinate_transformations import from_egocentric_to_global
-
+from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas
 from sbpl.environments import EnvNAVXYTHETALAT_InitParms, EnvironmentNAVXYTHETALAT
-from sbpl.motion_primitives import dump_motion_primitives
-from sbpl.utilities.costmap_2d_python import CostMap2D
 from sbpl.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap
-from sbpl.utilities.map_drawing_utils import prepare_canvas, draw_world_map, draw_robot, draw_trajectory
+from sbpl.utilities.map_drawing_utils import draw_world_map, draw_robot, draw_trajectory
 
 
 def create_planner(planner_name, environment, forward_search):
