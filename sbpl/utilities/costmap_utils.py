@@ -9,7 +9,7 @@ from sbpl.utilities.costmap_2d_python import CostMap2D
 from sbpl.utilities.path_tools import world_to_pixel_sbpl
 
 
-def pose_collides(pose, footprint, costmap_data, origin, resolution):
+def pose_collides_sbpl(pose, footprint, costmap_data, origin, resolution):
     '''
     Check if robot footprint at x, y (world coordinates) and
         oriented as yaw collides with lethal obstacles.

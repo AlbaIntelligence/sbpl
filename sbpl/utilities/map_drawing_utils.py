@@ -4,6 +4,9 @@ from __future__ import division
 
 import cv2
 import numpy as np
+
+from bc_gym_planning_env.utilities.map_drawing_utils import get_drawing_angle_from_physical, \
+    get_pixel_footprint_for_drawing
 from bc_gym_planning_env.utilities.path_tools import blit, get_pixel_footprint
 
 from sbpl.utilities.costmap_2d_python import CostMap2D
@@ -16,7 +19,7 @@ corresponds to the last row of the image array.
 """
 
 
-def get_drawing_coordinates_from_physical(map_shape, resolution, origin, physical_coords, enforce_bounds=False):
+def get_drawing_coordinates_from_physical_floor(map_shape, resolution, origin, physical_coords, enforce_bounds=False):
     '''
     :param physical_coords: either (x, y)  or n x 2 array of (x, y), in physical units
     :param enforce_bounds: Can be:
@@ -40,43 +43,11 @@ def get_drawing_coordinates_from_physical(map_shape, resolution, origin, physica
     return pixel_coords
 
 
-def get_drawing_angle_from_physical(angle):
-    '''
-    Invert physical angle for consistency with inverting the y axis in
-    get_drawing_coordinates_from_physical.
-    :param angle: physical angle in radians
-    :return: angle in radians to draw with
-    '''
-    return -angle
-
-
-def get_physical_angle_from_drawing(angle):
-    '''
-    Invert drawing angle for consistency with inverting the y axis in
-    get_physical_coords_from_drawing.
-    :param angle: physical angle in radians in drawing coordinates
-    :return: angle in radians to draw with
-    '''
-    return -angle
-
-
-def get_pixel_footprint_for_drawing(angle, robot_footprint, map_resolution, fill=True):
-    '''
-    Return pixel footprint kernel for visualization of the robot.
-    The footprint kernel is flipped.
-    angle_range - angle in physical coordinates (!)
-    '''
-    footprint_picture = get_pixel_footprint(angle,
-                                            robot_footprint, map_resolution, fill)
-    footprint_picture = np.flipud(footprint_picture)
-    return footprint_picture
-
-
 def draw_trajectory(array_to_draw, resolution, origin, trajectory, color=(0, 255, 0),
                     enforce_bounds=False, thickness=1):
     if len(trajectory) == 0:
         return
-    drawing_coords = get_drawing_coordinates_from_physical(
+    drawing_coords = get_drawing_coordinates_from_physical_floor(
         array_to_draw.shape,
         resolution,
         origin,
@@ -137,7 +108,7 @@ def draw_wide_path(img, path, robot_width, origin, resolution, color=(220, 220, 
     :param resolution float: resolution of the costmap in meters
     :param color tuple[int]: BGR color tuple
     """
-    drawing_coords = get_drawing_coordinates_from_physical(
+    drawing_coords = get_drawing_coordinates_from_physical_floor(
         img.shape,
         resolution,
         origin,
@@ -148,9 +119,9 @@ def draw_wide_path(img, path, robot_width, origin, resolution, color=(220, 220, 
 
 
 def draw_robot(image_to_draw, footprint, pose, resolution, origin, color=(30, 150, 30), color_axis=None, fill=True):
-    px, py = get_drawing_coordinates_from_physical(image_to_draw.shape,
-                                                   resolution,
-                                                   origin,
+    px, py = get_drawing_coordinates_from_physical_floor(image_to_draw.shape,
+                                                         resolution,
+                                                         origin,
                                                    pose[0:2])
     kernel = get_pixel_footprint_for_drawing(pose[2], footprint, resolution, fill=fill)
     blit(kernel, image_to_draw, px, py, color, axis=color_axis)
@@ -172,8 +143,8 @@ def draw_arrow(image, pose, arrow_length, origin, resolution, color,
     xy_start = pose[:2]
     xy_end = xy_start + arrow_length*np.array(([np.cos(pose[2]), np.sin(pose[2])]))
 
-    p = get_drawing_coordinates_from_physical(image.shape, resolution, origin, xy_start)
-    q = get_drawing_coordinates_from_physical(image.shape, resolution, origin, xy_end)
+    p = get_drawing_coordinates_from_physical_floor(image.shape, resolution, origin, xy_start)
+    q = get_drawing_coordinates_from_physical_floor(image.shape, resolution, origin, xy_end)
     p = (int(p[0]), int(p[1]))
     q = (int(q[0]), int(q[1]))
     cv2.line(image, p, q, color, thickness, line_type, shift)
