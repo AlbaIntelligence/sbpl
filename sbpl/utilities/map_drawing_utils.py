@@ -4,8 +4,10 @@ from __future__ import division
 
 import cv2
 import numpy as np
+from bc_gym_planning_env.utilities.path_tools import blit
+
 from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.path_tools import world_to_pixel_floor, get_pixel_footprint, blit
+from sbpl.utilities.path_tools import world_to_pixel_floor, get_pixel_footprint
 
 
 """

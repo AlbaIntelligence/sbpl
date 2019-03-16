@@ -2,87 +2,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from bc_gym_planning_env.utilities.path_tools import parallel_distances
+from bc_gym_planning_env.utilities.path_tools import parallel_distances, get_blit_mask
 from builtins import range
 import numpy as np
 
 import cv2
 
 from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle, diff_angles
-
-
-def get_blit_mask(patch, im, x, y):
-    '''
-    Helper for blit operations. Computes a blit mask given a patch
-    @param: patch A 2D numeric value mask with positive numbers being evaluated as true
-    @param im The 2/3D image to blit
-    @param x The X location on the image to place  the center of the patch
-    @param x The Y location on the image to place the center of the patch
-    @return A subset of the input image that the patch's bounding box encompasses. Note that this image may not
-        necessarily be the same size as the patch. The second tuple is the patch being returned as a binary mask.
-    '''
-    patch_h, patch_w = patch.shape[:2]
-    im_h, im_w = im.shape[:2]
-
-    # We compute the end points for a bounding box that holds the patch with
-    # its center point at x, y.
-    #
-    start_x, start_y = int(x - patch_w // 2), int(y - patch_h // 2)
-    end_x, end_y = start_x + patch_w, start_y + patch_h
-
-    # If the starting point is larger than the end of the image, or the
-    # ending point of the bounding box is smaller than the beginning of
-    # the image then we know we have no overlap and can return immediately
-    if start_x >= im_w or start_y >= im_h or end_x <= 0 or end_y <= 0:
-        return None, None
-
-    # We have to account for cases where the patch is bigger than the image,
-    # as well as for cases where some portion of the bounding box falls
-    # outside of the image.
-    left_x_offset, right_x_offset = max(0, -start_x), max(0, end_x - im_w)
-    top_y_offset, bottom_y_offset = max(0, -start_y), max(0, end_y - im_h)
-
-    # This is the portion of the image that corresponds to the bounding box produced
-    # by the patch.
-    if im.ndim == 3:
-        image_slice = im[start_y + top_y_offset:end_y - bottom_y_offset, start_x + left_x_offset:end_x - right_x_offset, ...]
-    else:
-        # using ... is slow for normal 2d costmap
-        image_slice = im[start_y + top_y_offset:end_y - bottom_y_offset, start_x + left_x_offset:end_x - right_x_offset]
-
-    # We return the region of interest and also convert the patch to a boolean mask
-    return image_slice, patch[top_y_offset:patch_h - bottom_y_offset, left_x_offset:patch_w - right_x_offset] > 0
-
-
-def blit(patch, im, x, y, color, axis=None, alpha = 1.0):
-    '''
-    superimpose a binary patch, or the part of it that is within bounds,
-    over image im, centered at (x, y), with given color
-    :param axis: tuple of color indices - which color axis to mark with 'color' (None - mark all)
-    '''
-    image_slice, blit_mask = get_blit_mask(patch, im, x, y)
-    if image_slice is None:
-        return
-
-    if axis is None:
-        image_slice[blit_mask, ...] = (image_slice[blit_mask, ...]*(1-alpha) + np.array(color) * alpha) if alpha < 1.0 else np.array(color)
-    else:
-        image_slice[blit_mask, axis[0]:axis[1]] = image_slice[blit_mask, axis[0]:axis[1]]*(1-alpha) + np.array(color) * alpha if alpha < 1.0 else np.array(color)
-
-
-def get_blit_values(patch, im, x, y):
-    '''
-    like blit, but just returns the values of the im at the
-    pixels that would be set by blit
-    '''
-    image_slice, blit_mask = get_blit_mask(patch, im, x, y)
-    if image_slice is None:
-        return np.empty((0,) + im.shape[2:], dtype=im.dtype)
-    if im.ndim == 3:
-        return image_slice[blit_mask, ...]
-    else:
-        # using ... is slow for normal 2d costmap
-        return image_slice[blit_mask]
 
 
 def get_pixel_footprint(angle, robot_footprint, map_resolution, fill=True):
