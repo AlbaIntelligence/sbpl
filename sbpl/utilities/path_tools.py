@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from bc_gym_planning_env.utilities.path_tools import parallel_distances, get_blit_mask
+from bc_gym_planning_env.utilities.path_tools import parallel_distances, get_blit_mask, ensure_float_numpy
 from builtins import range
 import numpy as np
 
@@ -127,18 +127,6 @@ def pixel_to_world_centered(pixel_coords, origin, resolution):
     pixel_coords = np.asarray(pixel_coords)
     assert pixel_coords.shape[pixel_coords.ndim - 1] == 2
     return pixel_coords.astype(np.float64) * resolution + np.array(origin, dtype=np.float64) + resolution*0.5
-
-
-
-def ensure_float_numpy(data):
-    '''
-    Transforms python array to numpy or makes sure that numpy array is float32 or 64
-    '''
-    if isinstance(data, (list, tuple)):
-        return np.array(data, dtype=float)
-    else:
-        assert(data.dtype in [np.float, np.float32])
-        return data
 
 
 def refine_path(data, delta, angle_delta=None):
