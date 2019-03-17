@@ -7,12 +7,12 @@ import numpy as np
 
 from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
     get_random_maps_squeeze_between_obstacle_in_corridor_on_path
+from bc_gym_planning_env.robot_models.robot_dimensions_examples import IndustrialTricycleV1Dimensions
 from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas
 from sbpl.motion_primitives import forward_model_tricycle_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
 from sbpl.utilities.map_drawing_utils import draw_robot, draw_world_map_inflation
 from sbpl.utilities.path_tools import pixel_to_world_centered
-from sbpl.utilities.tricycle_drive import industrial_tricycle_footprint
 
 
 def run_sbpl_tricycle_motion_primitive_planning(
@@ -43,7 +43,7 @@ def run_sbpl_tricycle_motion_primitive_planning(
         debug_motion_primitives(motion_primitives)
 
     add_wall_to_static_map(test_map, (1, -4.6), (1.5, -4.6))
-    footprint = industrial_tricycle_footprint(footprint_scaler=footprint_scale)
+    footprint = IndustrialTricycleV1Dimensions.footprint()*footprint_scale
 
     plan_xytheta, plan_xytheta_cell, actions, plan_time, solution_eps, environment = perform_single_planning(
         planner_name='arastar',
