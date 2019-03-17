@@ -4,11 +4,13 @@ from __future__ import division
 
 import numpy as np
 import cv2
+
+from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
 from bc_gym_planning_env.utilities.path_tools import circumscribed_radius, inscribed_radius
 
 from bc_gym_planning_env.utilities.opencv_utils import single_threaded_opencv
 
-from sbpl.utilities.costmap_2d_python import CostMap2D
+INSCRIBED_INFLATED_OBSTACLE = 253
 
 
 def distance_transform(img):
@@ -56,7 +58,7 @@ def _pixel_distance_to_cost(distance, resolution, inscribed_rad, cost_scaling_fa
     other = distance > pixel_inscribed_radius
 
     # ros conventions
-    inscribed_cost = CostMap2D.INSCRIBED_INFLATED_OBSTACLE
+    inscribed_cost = INSCRIBED_INFLATED_OBSTACLE
     lethal_cost = CostMap2D.LETHAL_OBSTACLE
     costs = np.zeros(distance.shape, dtype=np.uint8)
     costs[other] = (inscribed_cost - 1) * np.exp(-pixel_scaling_factor * (distance[other] - pixel_inscribed_radius))
@@ -69,15 +71,14 @@ def _pixel_distance_to_cost(distance, resolution, inscribed_rad, cost_scaling_fa
 
 
 def inflate_costmap(costmap, cost_scaling_factor, footprint):
-    # type: (CostMap2D, Float, np.ndarray(N, 2)[Float]) -> CostMap2D
     '''
     Inflate data with costs
     Costmap inflation is explained here:
     http://wiki.ros.org/costmap_2d#Inflation
-    :param costmap: obstacle map
-    :param cost_scaling_factor: how to scale the inflated costs
-    :param footprint: footprint of the robot
-    :return: inflated costs
+    :param costmap CostMap2D: obstacle map
+    :param cost_scaling_factor Float: how to scale the inflated costs
+    :param footprint np.ndarray(N, 2)[Float]: footprint of the robot
+    :return CostMap2D: inflated costs
     '''
     image_for_dist_transform = CostMap2D.LETHAL_OBSTACLE - costmap.get_data()
     distance = distance_transform(image_for_dist_transform)

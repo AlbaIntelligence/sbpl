@@ -5,11 +5,12 @@ from __future__ import division
 import cv2
 import numpy as np
 
+from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
 from bc_gym_planning_env.utilities.map_drawing_utils import get_drawing_angle_from_physical, \
     get_pixel_footprint_for_drawing
 from bc_gym_planning_env.utilities.path_tools import blit
+from sbpl.utilities.costmap_inflation import INSCRIBED_INFLATED_OBSTACLE
 
-from sbpl.utilities.costmap_2d_python import CostMap2D
 from sbpl.utilities.path_tools import world_to_pixel_floor
 
 
@@ -67,7 +68,7 @@ def draw_world_map_inflation(img, costmap_data):
     costmap = np.flipud(costmap_data)
     img[costmap > 0] = (200, 0, 0)
     img[costmap == CostMap2D.LETHAL_OBSTACLE] = (0, 255, 255)
-    img[costmap == CostMap2D.INSCRIBED_INFLATED_OBSTACLE] = (200, 200, 0)
+    img[costmap == INSCRIBED_INFLATED_OBSTACLE] = (200, 200, 0)
     img[costmap == CostMap2D.NO_INFORMATION] = (70, 70, 70)
 
 
