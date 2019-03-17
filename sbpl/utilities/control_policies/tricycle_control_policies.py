@@ -7,9 +7,9 @@ from builtins import zip
 import itertools
 import numpy as np
 
+from bc_gym_planning_env.robot_models.tricycle_model import diff_drive_control_to_tricycle
 from bc_gym_planning_env.utilities.coordinate_transformations import normalize_angle
 from sbpl.utilities.control_policies.common_control_policies import copy_control_policy, statefull_branching
-from sbpl.utilities.differential_drive import diff_drive_control_to_tricycle
 
 
 def tricycle_branching_policy(pose_evolution, state_evolution, control_evolution,

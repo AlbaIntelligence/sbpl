@@ -4,7 +4,7 @@ from __future__ import division
 
 import numpy as np
 
-from sbpl.utilities.differential_drive import kinematic_body_pose_motion_step
+from bc_gym_planning_env.robot_models.differential_drive import kinematic_body_pose_motion_step
 
 
 def tricycle_kinematic_step(pose, current_wheel_angle, dt, control_signals, max_front_wheel_angle, front_wheel_from_axis,
