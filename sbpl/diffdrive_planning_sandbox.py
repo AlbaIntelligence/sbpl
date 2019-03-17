@@ -5,14 +5,15 @@ from __future__ import division
 import numpy as np
 import cv2
 
+from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map
 from sbpl.motion_primitives import forward_model_diffdrive_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
 from sbpl.utilities.differential_drive import industrial_diffdrive_footprint
-from sbpl.utilities.map_drawing_utils import add_wall_to_static_map, draw_robot, prepare_canvas, draw_world_map
+from sbpl.utilities.map_drawing_utils import draw_robot, draw_world_map_inflation
 
 from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
     get_random_maps_squeeze_between_obstacle_in_corridor_on_path
-from sbpl.utilities.path_tools import pixel_to_world_centered, normalize_angle
+from sbpl.utilities.path_tools import pixel_to_world_centered
 
 
 def run_sbpl_diffdrive_motion_primitive_planning(
@@ -56,7 +57,7 @@ def run_sbpl_diffdrive_motion_primitive_planning(
     costmap = environment.get_costmap()
 
     img = prepare_canvas(costmap.shape)
-    draw_world_map(img, costmap)
+    draw_world_map_inflation(img, costmap)
     start_pose = static_path[0]
     start_pose[:2] -= test_map.get_origin()
     goal_pose = static_path[-10]
@@ -154,7 +155,7 @@ def run_sbpl_diffdrive_motion_primitive_planning(
     costmap = environment.get_costmap()
 
     img = prepare_canvas(costmap.shape)
-    draw_world_map(img, costmap)
+    draw_world_map_inflation(img, costmap)
     start_pose = static_path[0]
     start_pose[:2] -= test_map.get_origin()
     goal_pose = static_path[-10]

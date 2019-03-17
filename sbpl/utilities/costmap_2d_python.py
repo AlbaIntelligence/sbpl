@@ -2,6 +2,8 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 import numpy as np
+
+from bc_gym_planning_env.utilities.frozenarray import freeze_array
 from sbpl.utilities.path_tools import world_to_pixel_floor
 
 
@@ -104,13 +106,3 @@ class CostMap2D(object):
             resolution=state['resolution'],
             origin=freeze_array(state['origin']),
         )
-
-
-def freeze_array(array):
-    """
-    Make numpy array read-only
-    :param array: numpy array
-    :return: read-only numpy array
-    """
-    array.flags.writeable = False
-    return array

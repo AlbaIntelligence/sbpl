@@ -7,7 +7,7 @@ import numpy as np
 
 from bc_gym_planning_env.utilities.map_drawing_utils import get_drawing_angle_from_physical, \
     get_pixel_footprint_for_drawing
-from bc_gym_planning_env.utilities.path_tools import blit, get_pixel_footprint
+from bc_gym_planning_env.utilities.path_tools import blit
 
 from sbpl.utilities.costmap_2d_python import CostMap2D
 from sbpl.utilities.path_tools import world_to_pixel_floor
@@ -57,21 +57,7 @@ def draw_trajectory(array_to_draw, resolution, origin, trajectory, color=(0, 255
     cv2.polylines(array_to_draw, [drawing_coords], False, color, thickness=thickness)
 
 
-def _mark_wall_on_static_map(static_map, p0, p1, width, color):
-    thickness = max(1, int(width/static_map.get_resolution()))
-    cv2.line(
-        static_map.get_data(),
-        tuple(world_to_pixel_floor(np.array(p0), static_map.get_origin(), static_map.get_resolution())),
-        tuple(world_to_pixel_floor(np.array(p1), static_map.get_origin(), static_map.get_resolution())),
-        color=color,
-        thickness=thickness)
-
-
-def add_wall_to_static_map(static_map, p0, p1, width=0.05, cost=CostMap2D.LETHAL_OBSTACLE):
-    _mark_wall_on_static_map(static_map, p0, p1, width, cost)
-
-
-def draw_world_map(img, costmap_data):
+def draw_world_map_inflation(img, costmap_data):
     '''
     Draws obstacles and unknowns
     :param img array(W, H, 3)[uint8]: canvas to draw on
@@ -113,14 +99,6 @@ def draw_robot(image_to_draw, footprint, pose, resolution, origin, color=(30, 15
     kernel = get_pixel_footprint_for_drawing(pose[2], footprint, resolution, fill=fill)
     blit(kernel, image_to_draw, px, py, color, axis=color_axis)
     return px, py
-
-
-def puttext_centered(im, text, pos, font=cv2.FONT_HERSHEY_PLAIN, size=0.6, color=(255, 255, 255)):
-    text_size, _ = cv2.getTextSize(text, font, size, 1)
-    y = int(pos[1] + text_size[1] // 2)
-    x = int(pos[0] - text_size[0] // 2)  # it is complaining (integer argument expected)
-
-    cv2.putText(im, text, (x, y), font, size, color)
 
 
 def draw_arrow(image, pose, arrow_length, origin, resolution, color,

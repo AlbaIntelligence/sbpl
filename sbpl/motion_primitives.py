@@ -121,7 +121,8 @@ def load_motion_pritimives(mprim_filename):
     params.goaly = 0
     params.goaltheta = 0
     empty_map = np.zeros((params.size_y, params.size_x), dtype=np.uint8)
-    env = sbpl._sbpl_module.EnvironmentNAVXYTHETALAT(np.array([[0., 0.]]), mprim_filename, empty_map, params)
+    env = sbpl._sbpl_module.EnvironmentNAVXYTHETALAT(np.array([[0., 0.]]), mprim_filename, empty_map, params,
+                                                     False)
     return MotionPrimitives(resolution, number_of_angles, env.get_motion_primitives_list())
 
 

@@ -7,13 +7,14 @@ import os
 import numpy as np
 import cv2
 
+from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas
 from sbpl.environments import EnvironmentNAVXYTHETALAT
 from sbpl.motion_primitives import mprim_folder, load_motion_pritimives
 from sbpl.planners import create_planner
 from sbpl.utilities.costmap_2d_python import CostMap2D
 
-from sbpl.utilities.map_drawing_utils import prepare_canvas, draw_robot, draw_trajectory
-from sbpl.utilities.map_drawing_utils import draw_world_map
+from sbpl.utilities.map_drawing_utils import draw_robot, draw_trajectory
+from sbpl.utilities.map_drawing_utils import draw_world_map_inflation
 
 
 def env_examples_folder():
@@ -94,7 +95,8 @@ def planandnavigatexythetalat(environment_config, motion_primitives, planner_nam
         planner.apply_environment_changes(changed_cells, env)
 
         print("new planning...")
-        plan_xytheta, plan_xytheta_cell, plan_time, solution_eps = planner.replan(env, allocated_time=10.)
+        plan_xytheta, plan_xytheta_cell, controls, plan_time, solution_eps = planner.replan(
+            env, allocated_time=10., final_epsilon=1.)
         print("done with the solution of size=%d and sol. eps=%f" % (len(plan_xytheta_cell), solution_eps))
         print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
 
@@ -114,7 +116,7 @@ def planandnavigatexythetalat(environment_config, motion_primitives, planner_nam
             print("No move is made")
 
         img = prepare_canvas(true_costmap.shape)
-        draw_world_map(img, true_costmap)
+        draw_world_map_inflation(img, true_costmap)
         draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
         draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
         draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))

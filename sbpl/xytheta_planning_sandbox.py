@@ -4,11 +4,12 @@ from __future__ import division
 import numpy as np
 import cv2
 
+from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
+from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas
 from sbpl.motion_primitives import MotionPrimitives, create_linear_primitive, exhaustive_geometric_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.costmap_2d_python import CostMap2D
-from sbpl.utilities.map_drawing_utils import add_wall_to_static_map, draw_trajectory, draw_robot, prepare_canvas, \
-    draw_world_map
+from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_robot, \
+    draw_world_map_inflation
 
 
 def box_2d_planning(debug):
@@ -78,7 +79,7 @@ def box_2d_planning(debug):
         params = environment.get_params()
         costmap = environment.get_costmap()
         img = prepare_canvas(costmap.shape)
-        draw_world_map(img, costmap)
+        draw_world_map_inflation(img, costmap)
         for pose in plan_xytheta:
             draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
                        color=70, color_axis=(1, 2))
@@ -138,7 +139,7 @@ def box_3d_planning(debug):
         params = environment.get_params()
         costmap = environment.get_costmap()
         img = prepare_canvas(costmap.shape)
-        draw_world_map(img, costmap)
+        draw_world_map_inflation(img, costmap)
         for pose in plan_xytheta:
             draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
                        color=70, color_axis=(1, 2))
@@ -149,7 +150,6 @@ def box_3d_planning(debug):
         img = cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST)
         cv2.imshow("planning result", img)
         cv2.waitKey(-1)
-
 
 
 if __name__ == '__main__':
