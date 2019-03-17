@@ -6,10 +6,9 @@ import cv2
 import numpy as np
 
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
-from bc_gym_planning_env.utilities.map_drawing_utils import get_drawing_angle_from_physical, \
-    get_pixel_footprint_for_drawing
+from bc_gym_planning_env.utilities.map_drawing_utils import get_pixel_footprint_for_drawing
 from bc_gym_planning_env.utilities.path_tools import blit
-from sbpl.utilities.costmap_inflation import INSCRIBED_INFLATED_OBSTACLE
+from bc_gym_planning_env.utilities.costmap_inflation import INSCRIBED_INFLATED_OBSTACLE
 
 from sbpl.utilities.path_tools import world_to_pixel_floor
 

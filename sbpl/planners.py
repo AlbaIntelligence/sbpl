@@ -8,7 +8,7 @@ import cv2
 
 from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas
 from sbpl.environments import EnvNAVXYTHETALAT_InitParms, EnvironmentNAVXYTHETALAT
-from sbpl.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap
+from bc_gym_planning_env.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap
 from sbpl.utilities.map_drawing_utils import draw_world_map_inflation, draw_robot, draw_trajectory
 
 
