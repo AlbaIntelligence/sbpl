@@ -9,9 +9,7 @@ from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
 from bc_gym_planning_env.utilities.map_drawing_utils import get_pixel_footprint_for_drawing
 from bc_gym_planning_env.utilities.path_tools import blit
 from bc_gym_planning_env.utilities.costmap_inflation import INSCRIBED_INFLATED_OBSTACLE
-
-from sbpl.utilities.path_tools import world_to_pixel_floor
-
+from sbpl.utilities.path_tools import world_to_pixel_sbpl
 
 """
 NOTE: All draw functions in here assument that the image is already flipped for drawing... i.e. The lowet y value 
@@ -34,7 +32,7 @@ def get_drawing_coordinates_from_physical_floor(map_shape, resolution, origin, p
     assert physical_coords.shape[physical_coords.ndim - 1] == 2
     assert np.array(map_shape).ndim == 1
 
-    pixel_coords = world_to_pixel_floor(physical_coords, origin, resolution)
+    pixel_coords = world_to_pixel_sbpl(physical_coords, origin, resolution)
     # flip the y because we flip image for display
     pixel_coords[..., 1] = map_shape[0] - 1 - pixel_coords[..., 1]
 
