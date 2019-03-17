@@ -7,9 +7,10 @@ import numpy as np
 
 from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
     get_random_maps_squeeze_between_obstacle_in_corridor_on_path
+from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas
 from sbpl.motion_primitives import forward_model_tricycle_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.map_drawing_utils import add_wall_to_static_map, draw_robot, prepare_canvas, draw_world_map_inflation
+from sbpl.utilities.map_drawing_utils import draw_robot, draw_world_map_inflation
 from sbpl.utilities.path_tools import pixel_to_world_centered
 from sbpl.utilities.tricycle_drive import industrial_tricycle_footprint
 
@@ -32,7 +33,10 @@ def run_sbpl_tricycle_motion_primitive_planning(
         number_of_angles=number_of_angles,
         target_v=target_v,
         tricycle_angle_samples=tricycle_angle_samples,
-        primitives_duration=primitives_duration
+        primitives_duration=primitives_duration,
+        front_wheel_rotation_speedup=10,
+        refine_dt=0.10,
+        v_samples=1
     )
 
     if do_debug_motion_primitives:
@@ -124,5 +128,5 @@ if __name__ == '__main__':
         tricycle_angle_samples=15,
         primitives_duration=2,
         footprint_scale=0.95,
-        do_debug_motion_primitives=True
+        do_debug_motion_primitives=False
     )
