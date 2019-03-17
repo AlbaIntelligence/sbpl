@@ -100,29 +100,3 @@ def draw_robot(image_to_draw, footprint, pose, resolution, origin, color=(30, 15
     kernel = get_pixel_footprint_for_drawing(pose[2], footprint, resolution, fill=fill)
     blit(kernel, image_to_draw, px, py, color, axis=color_axis)
     return px, py
-
-
-def draw_arrow(image, pose, arrow_length, origin, resolution, color,
-               arrow_magnitude=4, thickness=1, line_type=8, shift=0):
-    # adapted from http://mlikihazar.blogspot.com.au/2013/02/draw-arrow-opencv.html
-    # draw arrow tail
-    xy_start = pose[:2]
-    xy_end = xy_start + arrow_length*np.array(([np.cos(pose[2]), np.sin(pose[2])]))
-
-    p = get_drawing_coordinates_from_physical_floor(image.shape, resolution, origin, xy_start)
-    q = get_drawing_coordinates_from_physical_floor(image.shape, resolution, origin, xy_end)
-    p = (int(p[0]), int(p[1]))
-    q = (int(q[0]), int(q[1]))
-    cv2.line(image, p, q, color, thickness, line_type, shift)
-    arrow_angle = get_drawing_angle_from_physical(pose[2])
-
-    # starting point of first line of arrow head
-    p = (int(q[0] + arrow_magnitude * np.cos(arrow_angle + 3*np.pi/4)),
-         int(q[1] + arrow_magnitude * np.sin(arrow_angle + 3*np.pi/4)))
-    # draw first half of arrow head
-    cv2.line(image, p, q, color, thickness, line_type, shift)
-    # starting point of second line of arrow head
-    p = (int(q[0] + arrow_magnitude * np.cos(arrow_angle - 3*np.pi/4)),
-         int(q[1] + arrow_magnitude * np.sin(arrow_angle - 3*np.pi/4)))
-    # draw second half of arrow head
-    cv2.line(image, p, q, color, thickness, line_type, shift)
