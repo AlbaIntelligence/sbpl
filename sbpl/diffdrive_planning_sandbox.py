@@ -5,10 +5,10 @@ from __future__ import division
 import numpy as np
 import cv2
 
+from bc_gym_planning_env.robot_models.robot_dimensions_examples import IndustrialDiffdriveV1Dimensions
 from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas
 from sbpl.motion_primitives import forward_model_diffdrive_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.differential_drive import industrial_diffdrive_footprint
 from sbpl.utilities.map_drawing_utils import draw_robot, draw_world_map_inflation
 
 from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
@@ -21,7 +21,9 @@ def run_sbpl_diffdrive_motion_primitive_planning(
         target_v, target_w,
         w_samples_in_each_direction,
         primitives_duration,
-        footprint_scale):
+        footprint_scale,
+        do_debug_motion_primitives
+    ):
     original_costmap, static_path, test_maps = get_random_maps_squeeze_between_obstacle_in_corridor_on_path()
 
     test_map = test_maps[0]
@@ -36,10 +38,11 @@ def run_sbpl_diffdrive_motion_primitive_planning(
         primitives_duration=primitives_duration
     )
 
-    # debug_motion_primitives(motion_primitives)
+    if do_debug_motion_primitives:
+        debug_motion_primitives(motion_primitives)
 
     add_wall_to_static_map(test_map, (1, -4.6), (1.5, -4.6))
-    footprint = industrial_diffdrive_footprint(footprint_scaler=footprint_scale)
+    footprint = IndustrialDiffdriveV1Dimensions.footprint()*footprint_scale
 
     plan_xytheta, plan_xytheta_cell, actions, plan_time, solution_eps, environment = perform_single_planning(
         planner_name='arastar',
@@ -121,5 +124,6 @@ if __name__ == '__main__':
         number_of_angles=32,
         w_samples_in_each_direction=4,
         primitives_duration=5,
-        footprint_scale=1.8
+        footprint_scale=1.8,
+        do_debug_motion_primitives=False
     )
