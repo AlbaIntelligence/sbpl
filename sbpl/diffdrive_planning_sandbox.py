@@ -7,10 +7,10 @@ import cv2
 
 from bc_gym_planning_env.robot_models.robot_dimensions_examples import IndustrialDiffdriveV1Dimensions
 from bc_gym_planning_env.utilities.coordinate_transformations import pixel_to_world
+from bc_gym_planning_env.utilities.costmap_inflation import draw_world_map_with_inflation
 from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas, draw_robot
 from sbpl.motion_primitives import forward_model_diffdrive_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.map_drawing_utils import draw_world_map_inflation
 
 from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
     get_random_maps_squeeze_between_obstacle_in_corridor_on_path
@@ -62,7 +62,7 @@ def run_sbpl_diffdrive_motion_primitive_planning(
     costmap = environment.get_costmap()
 
     img = prepare_canvas(costmap.shape)
-    draw_world_map_inflation(img, costmap)
+    draw_world_map_with_inflation(img, costmap)
     start_pose = static_path[0]
     start_pose[:2] -= test_map.get_origin()
     goal_pose = static_path[-10]

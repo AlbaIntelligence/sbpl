@@ -9,10 +9,10 @@ from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
     get_random_maps_squeeze_between_obstacle_in_corridor_on_path
 from bc_gym_planning_env.robot_models.robot_dimensions_examples import IndustrialTricycleV1Dimensions
 from bc_gym_planning_env.utilities.coordinate_transformations import pixel_to_world
+from bc_gym_planning_env.utilities.costmap_inflation import draw_world_map_with_inflation
 from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas, draw_robot
 from sbpl.motion_primitives import forward_model_tricycle_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.map_drawing_utils import draw_world_map_inflation
 
 
 def run_sbpl_tricycle_motion_primitive_planning(
@@ -65,7 +65,7 @@ def run_sbpl_tricycle_motion_primitive_planning(
     costmap = environment.get_costmap()
 
     img = prepare_canvas(costmap.shape)
-    draw_world_map_inflation(img, costmap)
+    draw_world_map_with_inflation(img, costmap)
     start_pose = static_path[0]
     start_pose[:2] -= test_map.get_origin()
     goal_pose = static_path[-10]
@@ -109,7 +109,7 @@ def run_sbpl_tricycle_motion_primitive_planning(
 
     for pose in trajectory_through_primitives:
         draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
-                   color=70, color_axis=(1, 2))
+                   color=70, color_axis=(0, 2))
 
     # draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
     draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))

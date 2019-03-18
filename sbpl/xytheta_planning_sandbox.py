@@ -5,12 +5,11 @@ import numpy as np
 import cv2
 
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
+from bc_gym_planning_env.utilities.costmap_inflation import draw_world_map_with_inflation
 from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas, draw_trajectory, \
     draw_robot
 from sbpl.motion_primitives import MotionPrimitives, create_linear_primitive, exhaustive_geometric_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.map_drawing_utils import \
-    draw_world_map_inflation
 
 
 def box_2d_planning(debug):
@@ -80,7 +79,7 @@ def box_2d_planning(debug):
         params = environment.get_params()
         costmap = environment.get_costmap()
         img = prepare_canvas(costmap.shape)
-        draw_world_map_inflation(img, costmap)
+        draw_world_map_with_inflation(img, costmap)
         for pose in plan_xytheta:
             draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
                        color=70, color_axis=(1, 2))
@@ -140,7 +139,7 @@ def box_3d_planning(debug):
         params = environment.get_params()
         costmap = environment.get_costmap()
         img = prepare_canvas(costmap.shape)
-        draw_world_map_inflation(img, costmap)
+        draw_world_map_with_inflation(img, costmap)
         for pose in plan_xytheta:
             draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
                        color=70, color_axis=(1, 2))

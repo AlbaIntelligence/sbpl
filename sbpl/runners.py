@@ -12,8 +12,7 @@ from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas, draw
 from sbpl.environments import EnvironmentNAVXYTHETALAT
 from sbpl.motion_primitives import mprim_folder, load_motion_pritimives
 from sbpl.planners import create_planner
-from bc_gym_planning_env.utilities.costmap_inflation import INSCRIBED_INFLATED_OBSTACLE
-from sbpl.utilities.map_drawing_utils import draw_world_map_inflation
+from bc_gym_planning_env.utilities.costmap_inflation import INSCRIBED_INFLATED_OBSTACLE, draw_world_map_with_inflation
 
 
 def env_examples_folder():
@@ -115,7 +114,7 @@ def planandnavigatexythetalat(environment_config, motion_primitives, planner_nam
             print("No move is made")
 
         img = prepare_canvas(true_costmap.shape)
-        draw_world_map_inflation(img, true_costmap)
+        draw_world_map_with_inflation(img, true_costmap)
         draw_trajectory(img, params.cellsize_m, np.zeros((2,)), plan_xytheta)
         draw_robot(img, footprint, start_pose, params.cellsize_m, np.zeros((2,)))
         draw_robot(img, footprint, goal_pose, params.cellsize_m, np.zeros((2,)))

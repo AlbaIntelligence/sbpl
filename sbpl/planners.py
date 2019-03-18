@@ -8,8 +8,8 @@ import cv2
 
 from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas, draw_trajectory, draw_robot
 from sbpl.environments import EnvNAVXYTHETALAT_InitParms, EnvironmentNAVXYTHETALAT
-from bc_gym_planning_env.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap
-from sbpl.utilities.map_drawing_utils import draw_world_map_inflation
+from bc_gym_planning_env.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap, \
+    draw_world_map_with_inflation
 
 
 def create_planner(planner_name, environment, forward_search):
@@ -131,7 +131,7 @@ def perform_single_planning(
         costmap = environment.get_costmap()
 
         img = prepare_canvas(costmap.shape)
-        draw_world_map_inflation(img, costmap)
+        draw_world_map_with_inflation(img, costmap)
         for pose in plan_xytheta:
             draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
                        color=70, color_axis=(1, 2))
