@@ -8,12 +8,11 @@ import numpy as np
 import cv2
 
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
-from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas, draw_trajectory
+from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas, draw_trajectory, draw_robot
 from sbpl.environments import EnvironmentNAVXYTHETALAT
 from sbpl.motion_primitives import mprim_folder, load_motion_pritimives
 from sbpl.planners import create_planner
 from bc_gym_planning_env.utilities.costmap_inflation import INSCRIBED_INFLATED_OBSTACLE
-from sbpl.utilities.map_drawing_utils import draw_robot
 from sbpl.utilities.map_drawing_utils import draw_world_map_inflation
 
 

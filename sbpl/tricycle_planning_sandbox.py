@@ -9,10 +9,10 @@ from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
     get_random_maps_squeeze_between_obstacle_in_corridor_on_path
 from bc_gym_planning_env.robot_models.robot_dimensions_examples import IndustrialTricycleV1Dimensions
 from bc_gym_planning_env.utilities.coordinate_transformations import pixel_to_world
-from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas
+from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas, draw_robot
 from sbpl.motion_primitives import forward_model_tricycle_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.map_drawing_utils import draw_robot, draw_world_map_inflation
+from sbpl.utilities.map_drawing_utils import draw_world_map_inflation
 
 
 def run_sbpl_tricycle_motion_primitive_planning(
