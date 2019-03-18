@@ -5,10 +5,10 @@ import numpy as np
 import cv2
 
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
-from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas
+from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas, draw_trajectory
 from sbpl.motion_primitives import MotionPrimitives, create_linear_primitive, exhaustive_geometric_primitives
 from sbpl.planners import perform_single_planning
-from sbpl.utilities.map_drawing_utils import draw_trajectory, draw_robot, \
+from sbpl.utilities.map_drawing_utils import draw_robot, \
     draw_world_map_inflation
 
 

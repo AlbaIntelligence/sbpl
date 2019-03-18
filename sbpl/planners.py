@@ -6,10 +6,10 @@ import sbpl._sbpl_module
 import numpy as np
 import cv2
 
-from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas
+from bc_gym_planning_env.utilities.map_drawing_utils import prepare_canvas, draw_trajectory
 from sbpl.environments import EnvNAVXYTHETALAT_InitParms, EnvironmentNAVXYTHETALAT
 from bc_gym_planning_env.utilities.costmap_inflation import compute_cost_possibly_circumscribed_thresh, inflate_costmap
-from sbpl.utilities.map_drawing_utils import draw_world_map_inflation, draw_robot, draw_trajectory
+from sbpl.utilities.map_drawing_utils import draw_world_map_inflation, draw_robot
 
 
 def create_planner(planner_name, environment, forward_search):
