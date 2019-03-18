@@ -53,6 +53,7 @@ def pixel_to_world_centered(pixel_coords, origin, resolution):
 
 
 pixel_to_world_centered = pixel_to_world
+world_to_pixel_sbpl = world_to_pixel
 
 
 def angle_cont_to_discrete(angle, num_angles):
