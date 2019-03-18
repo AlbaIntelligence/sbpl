@@ -15,8 +15,8 @@ from bc_gym_planning_env.robot_models.tricycle_model import tricycle_kinematic_s
 from bc_gym_planning_env.utilities.frozenarray import freeze_array
 from bc_gym_planning_env.utilities.path_tools import draw_arrow
 
-from sbpl.utilities.control_policies.diff_drive_contol_policies import control_choices_diff_drive_exhaustive
-from sbpl.utilities.control_policies.tricycle_control_policies import control_choices_tricycle_exhaustive
+from sbpl.control_policies.diff_drive_contol_policies import control_choices_diff_drive_exhaustive
+from sbpl.control_policies.tricycle_control_policies import control_choices_tricycle_exhaustive
 from sbpl.utilities.map_drawing_utils import draw_trajectory
 from sbpl.utilities.path_tools import angle_discrete_to_cont, \
     angle_cont_to_discrete

@@ -8,7 +8,7 @@ import numpy as np
 import itertools
 import logging
 
-from sbpl.utilities.control_policies.common_control_policies import statefull_branching, copy_control_policy
+from sbpl.control_policies import statefull_branching, copy_control_policy
 
 
 def gen_vw_step_choices(min_v, max_v, max_w, v_samples, w_samples_in_each_direction, enable_turn_in_place):
