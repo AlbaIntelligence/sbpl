@@ -18,8 +18,28 @@ from bc_gym_planning_env.utilities.path_tools import draw_arrow
 from sbpl.control_policies.diff_drive_contol_policies import control_choices_diff_drive_exhaustive
 from sbpl.control_policies.tricycle_control_policies import control_choices_tricycle_exhaustive
 from sbpl.utilities.map_drawing_utils import draw_trajectory
-from sbpl.utilities.path_tools import angle_discrete_to_cont, \
-    angle_cont_to_discrete
+
+
+def angle_cont_to_discrete(angle, num_angles):
+    '''
+    Python port of ContTheta2Disc from sbpl utils (from continuous angle to one of uniform ones)
+    :param angle float: float angle
+    :param num_angles int: number of angles in 2*pi range
+    :return: discrete angle
+    '''
+    theta_bin_size = 2.0 * np.pi / num_angles
+    return (int)((normalize_angle(angle + theta_bin_size / 2.0) + 2*np.pi) / (2.0 * np.pi) * num_angles)
+
+
+def angle_discrete_to_cont(angle_cell, num_angles):
+    '''
+    Python port of DiscTheta2Cont from sbpl utils (from discrete angle to continuous)
+    :param angle_cell int: discrete angle
+    :param num_angles int: number of angles in 2*pi range
+    :return: discrete angle
+    '''
+    bin_size = 2*np.pi/num_angles
+    return normalize_angle(angle_cell*bin_size)
 
 
 def mprim_folder():
