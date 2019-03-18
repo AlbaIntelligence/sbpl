@@ -10,7 +10,7 @@ import cv2
 from bc_gym_planning_env.robot_models.differential_drive import kinematic_body_pose_motion_step
 from bc_gym_planning_env.robot_models.robot_dimensions_examples import IndustrialTricycleV1Dimensions
 from bc_gym_planning_env.utilities.coordinate_transformations import diff_angles, normalize_angle, \
-    from_egocentric_to_global
+    from_egocentric_to_global, world_to_pixel, pixel_to_world
 from bc_gym_planning_env.robot_models.tricycle_model import tricycle_kinematic_step
 from bc_gym_planning_env.utilities.frozenarray import freeze_array
 from bc_gym_planning_env.utilities.path_tools import draw_arrow
@@ -18,8 +18,8 @@ from bc_gym_planning_env.utilities.path_tools import draw_arrow
 from sbpl.utilities.control_policies.diff_drive_contol_policies import control_choices_diff_drive_exhaustive
 from sbpl.utilities.control_policies.tricycle_control_policies import control_choices_tricycle_exhaustive
 from sbpl.utilities.map_drawing_utils import draw_trajectory
-from sbpl.utilities.path_tools import pixel_to_world_centered, angle_discrete_to_cont, \
-    world_to_pixel_sbpl, angle_cont_to_discrete
+from sbpl.utilities.path_tools import angle_discrete_to_cont, \
+    angle_cont_to_discrete
 
 
 def mprim_folder():
@@ -178,7 +178,7 @@ def debug_motion_primitives(motion_primitives, only_zero_angle=False):
             else:
                 turn_in_place = ''
             print(turn_in_place, p.endcell, p.get_intermediate_states()[0], p.get_intermediate_states()[-1])
-            final_float_state = pixel_to_world_centered(p.endcell[:2], np.zeros((2,)), motion_primitives.get_resolution())
+            final_float_state = pixel_to_world(p.endcell[:2], np.zeros((2,)), motion_primitives.get_resolution())
             final_float_angle = angle_discrete_to_cont(p.endcell[2], motion_primitives.get_number_of_angles())
             try:
                 np.testing.assert_array_almost_equal(final_float_state, p.get_intermediate_states()[-1][:2])
@@ -357,14 +357,14 @@ def forward_model_diffdrive_motion_primitives(
             last_pose = poses[-1]
             end_cell = np.zeros((3,), dtype=int)
 
-            center_cell_shift = pixel_to_world_centered(np.zeros((2,)), np.zeros((2,)), resolution)
-            end_cell[:2] = world_to_pixel_sbpl(center_cell_shift + last_pose[:2], np.zeros((2,)), resolution)
+            center_cell_shift = pixel_to_world(np.zeros((2,)), np.zeros((2,)), resolution)
+            end_cell[:2] = world_to_pixel(center_cell_shift + last_pose[:2], np.zeros((2,)), resolution)
             perfect_last_pose = np.zeros((3,), dtype=float)
             end_cell[2] = angle_cont_to_discrete(last_pose[2], number_of_angles)
 
             current_primitive_cells.append(tuple(end_cell))
 
-            perfect_last_pose[:2] = pixel_to_world_centered(end_cell[:2], np.zeros((2,)), resolution)
+            perfect_last_pose[:2] = pixel_to_world(end_cell[:2], np.zeros((2,)), resolution)
             perfect_last_pose[2] = angle_discrete_to_cont(end_cell[2], number_of_angles)
 
             # penalize slow movement forward and sudden jerns
@@ -449,14 +449,14 @@ def forward_model_tricycle_motion_primitives(
             last_pose = poses[-1]
             end_cell = np.zeros((3,), dtype=int)
 
-            center_cell_shift = pixel_to_world_centered(np.zeros((2,)), np.zeros((2,)), resolution)
-            end_cell[:2] = world_to_pixel_sbpl(center_cell_shift + last_pose[:2], np.zeros((2,)), resolution)
+            center_cell_shift = pixel_to_world(np.zeros((2,)), np.zeros((2,)), resolution)
+            end_cell[:2] = world_to_pixel(center_cell_shift + last_pose[:2], np.zeros((2,)), resolution)
             perfect_last_pose = np.zeros((3,), dtype=float)
             end_cell[2] = angle_cont_to_discrete(last_pose[2], number_of_angles)
 
             current_primitive_cells.append(tuple(end_cell))
 
-            perfect_last_pose[:2] = pixel_to_world_centered(end_cell[:2], np.zeros((2,)), resolution)
+            perfect_last_pose[:2] = pixel_to_world(end_cell[:2], np.zeros((2,)), resolution)
             perfect_last_pose[2] = angle_discrete_to_cont(end_cell[2], number_of_angles)
 
             # # penalize slow movement forward and sudden jerns

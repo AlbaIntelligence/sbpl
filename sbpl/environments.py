@@ -10,9 +10,9 @@ import shutil
 import cv2
 import numpy as np
 
+from bc_gym_planning_env.utilities.coordinate_transformations import world_to_pixel, pixel_to_world
 from bc_gym_planning_env.utilities.path_tools import get_pixel_footprint
 from sbpl.motion_primitives import MotionPrimitives, dump_motion_primitives
-from sbpl.utilities.path_tools import pixel_to_world_centered, world_to_pixel_sbpl
 
 
 class EnvNAVXYTHETALAT_InitParms(sbpl._sbpl_module.EnvNAVXYTHETALAT_InitParms):
@@ -53,7 +53,7 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
         print('Setting up motion primitive kernels..')
         for p in motion_primitives.get_primitives():
 
-            primitive_start = pixel_to_world_centered(np.zeros((2,)), np.zeros((2,)), resolution)
+            primitive_start = pixel_to_world(np.zeros((2,)), np.zeros((2,)), resolution)
             primitive_states = p.get_intermediate_states().copy()
             primitive_states[:, :2] += primitive_start
 
@@ -65,7 +65,7 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
                 kernel_center = (kernel.shape[1] //  2, kernel.shape[0] //  2)
                 kernel = np.where(kernel)
 
-                px, py = world_to_pixel_sbpl(pose[:2], np.zeros((2,)), resolution)
+                px, py = world_to_pixel(pose[:2], np.zeros((2,)), resolution)
                 full_cv_kernel_x.append(kernel[1] + (px-kernel_center[0]))
                 full_cv_kernel_y.append(kernel[0] + (py-kernel_center[1]))
 

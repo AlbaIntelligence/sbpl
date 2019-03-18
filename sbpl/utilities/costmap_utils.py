@@ -4,9 +4,9 @@ from __future__ import division
 
 import numpy as np
 
+from bc_gym_planning_env.utilities.coordinate_transformations import world_to_pixel
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
 from bc_gym_planning_env.utilities.path_tools import get_pixel_footprint
-from sbpl.utilities.path_tools import world_to_pixel_sbpl
 
 
 def pose_collides_sbpl(pose, footprint, costmap_data, origin, resolution):
@@ -20,7 +20,7 @@ def pose_collides_sbpl(pose, footprint, costmap_data, origin, resolution):
     # Get the coordinates of where the footprint is inside the kernel_image (on pixel coordinates)
     kernel = np.where(kernel_image)
     # Move footprint to (x,y), all in pixel coordinates
-    x, y = world_to_pixel_sbpl(pose[:2], origin, resolution)
+    x, y = world_to_pixel(pose[:2], origin, resolution)
     collisions = y + kernel[0] - kernel_image.shape[0] // 2, x + kernel[1] - kernel_image.shape[1] // 2
 
     # Check if the footprint pixel coordinates are valid, this is, if they are not negative and are inside the map

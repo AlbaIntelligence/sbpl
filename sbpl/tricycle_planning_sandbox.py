@@ -8,11 +8,11 @@ import numpy as np
 from bc_gym_planning_env.envs.rw_corridors.tdwa_test_environments import \
     get_random_maps_squeeze_between_obstacle_in_corridor_on_path
 from bc_gym_planning_env.robot_models.robot_dimensions_examples import IndustrialTricycleV1Dimensions
+from bc_gym_planning_env.utilities.coordinate_transformations import pixel_to_world
 from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, prepare_canvas
 from sbpl.motion_primitives import forward_model_tricycle_motion_primitives, debug_motion_primitives
 from sbpl.planners import perform_single_planning
 from sbpl.utilities.map_drawing_utils import draw_robot, draw_world_map_inflation
-from sbpl.utilities.path_tools import pixel_to_world_centered
 
 
 def run_sbpl_tricycle_motion_primitive_planning(
@@ -82,7 +82,7 @@ def run_sbpl_tricycle_motion_primitive_planning(
         collisions[:, 0] += pose_cell[0]
         collisions[:, 1] += pose_cell[1]
 
-        primitive_start = pixel_to_world_centered(pose_cell[:2], np.zeros((2,)), test_map.get_resolution())
+        primitive_start = pixel_to_world(pose_cell[:2], np.zeros((2,)), test_map.get_resolution())
         primitive = motion_primitives.find_primitive(angle_c, motor_prim_id)
         primitive_states = primitive.get_intermediate_states().copy()
         primitive_states[:, :2] += primitive_start
