@@ -3058,11 +3058,6 @@ void EnvironmentNAVXYTHETALAT::GetLazySuccs(
         if (!actionV) {
             EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
             if ((OutHashEntry = (this->*GetHashEntry)(newX, newY, newTheta)) == NULL) {
-
-                        if (newTheta < 0) {
-                throw SBPL_Exception("2");
-            }
-
                 OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
             }
             SuccIDV->push_back(OutHashEntry->stateID);
@@ -3080,10 +3075,6 @@ void EnvironmentNAVXYTHETALAT::GetLazySuccs(
         EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
         if ((OutHashEntry = (this->*GetHashEntry)(newX, newY, newTheta)) == NULL) {
             // have to create a new entry
-                        if (newTheta < 0) {
-                throw SBPL_Exception("3");
-            }
-
             OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
         }
 
@@ -3198,11 +3189,6 @@ void EnvironmentNAVXYTHETALAT::GetLazyPreds(
 
         EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
         if ((OutHashEntry = (this->*GetHashEntry)(predX, predY, predTheta)) == NULL) {
-
-                    if (predTheta < 0) {
-                throw SBPL_Exception("4");
-            }
-
             OutHashEntry = (this->*CreateNewHashEntry)(predX, predY, predTheta);
         }
 

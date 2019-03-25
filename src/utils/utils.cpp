@@ -761,14 +761,9 @@ void get_2d_motion_cells(vector<sbpl_2Dpt_t> polygon, vector<sbpl_xy_theta_pt_t>
         get_2d_footprint_cells(polygon, &cell_set, poses[i], res);
     }
 
-    // Original SBPL doesn't check starting footprint. This leads to colliding plans in tight corridors
-    //convert the motion set to a vector but don't include the cells in the first footprint set
-    //    cells->reserve(cell_set.size() - first_cell_set.size());
-    //    for (set<sbpl_2Dcell_t>::iterator it = cell_set.begin(); it != cell_set.end(); it++) {
-    //        if (first_cell_set.find(*it) == first_cell_set.end()) {
-    //            cells->push_back(*it);
-    //        }
-    //    }
+    // Original SBPL doesn't check starting footprint
+    // (doing a for loop through cell_set - first_cell_set only)
+    // This leads to colliding plans in tight corridors. Here we use all points
 
     cells->reserve(cell_set.size());
     for (set<sbpl_2Dcell_t>::iterator it = cell_set.begin(); it != cell_set.end(); it++) {

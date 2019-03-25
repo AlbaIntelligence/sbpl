@@ -48,11 +48,16 @@
             ((THETA) % (THETADIRS)) :\
             (((THETA) % (THETADIRS) + THETADIRS) % THETADIRS)))
 
-//#define CONTXY2DISC(X, CELLSIZE) (((X)>=0)?((int)((X)/(CELLSIZE))):((int)((X)/(CELLSIZE))-1))
-//#define DISCXY2CONT(X, CELLSIZE) ((X)*(CELLSIZE) + (CELLSIZE)/2.0)
+/*
+Original SBPL used 'floor' scheme for float to int conversion:
+#define CONTXY2DISC(X, CELLSIZE) (((X)>=0)?((int)((X)/(CELLSIZE))):((int)((X)/(CELLSIZE))-1))
+#define DISCXY2CONT(X, CELLSIZE) ((X)*(CELLSIZE) + (CELLSIZE)/2.0)
+
+Here we switched it to 'round' scheme to be consistent with
+https://github.com/braincorp/bc-gym-planning-env/tree/master/bc_gym_planning_env
+*/
 
 #define CONTXY2DISC(X, CELLSIZE) (int64_t(rint((X)*(1./(CELLSIZE)))))
-// Here we use floats to be consistent with pixel_to_world from env_utils
 #define DISCXY2CONT(X, CELLSIZE) (float((X))*float((CELLSIZE)))
 
 #define PI_CONST 3.141592653589793238462643383279502884
