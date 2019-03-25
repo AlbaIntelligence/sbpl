@@ -1076,7 +1076,6 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
                 throw SBPL_Exception("Primitive has negative endcell.theta");
             }
 
-
             numofactions++;
 
             // action index
@@ -1097,7 +1096,6 @@ void EnvironmentNAVXYTHETALATTICE::PrecomputeActionswithCompleteMotionPrimitive(
             if (EnvNAVXYTHETALATCfg.ActionsV[tind][aind].endtheta < 0) {
                 throw SBPL_Exception("Primitive has negative endtheta");
             }
-
 
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].dX = motionprimitiveV->at(mind).endcell.x;
             EnvNAVXYTHETALATCfg.ActionsV[tind][aind].dY = motionprimitiveV->at(mind).endcell.y;
@@ -1271,7 +1269,7 @@ void EnvironmentNAVXYTHETALATTICE::InitializeEnvConfig(
 #endif
 
     if (motionprimitiveV == NULL) {
-        // throw SBPL_Exception("Motion primitive is NULL");
+        throw SBPL_Exception("Motion primitive is NULL");
     }
     else {
         PrecomputeActionswithCompleteMotionPrimitive(motionprimitiveV, computeKernels);
@@ -1386,18 +1384,6 @@ int EnvironmentNAVXYTHETALATTICE::GetActionCost(
             if (!IsValidCell(cell.x, cell.y)) {
                 return INFINITECOST;
             }
-
-// cost computation changed: cost = max(cost of centers of the robot along
-// action) intersecting cells are only used for collision checking
-//            if (EnvNAVXYTHETALATCfg.Grid2D[cell.x][cell.y] > maxcellcost) {
-//
-                //maxcellcost = EnvNAVXYTHETALATCfg.Grid2D[cell.x][cell.y];
-                //if (maxcellcost == 254) {
-//
-  //                  throw SBPL_Exception("NNOOOOO");
-    //            }
-                //SBPL_DEBUG("%d %d %d", cell.x, cell.y, maxcellcost);
-//            }
         }
     }
 
@@ -2152,10 +2138,6 @@ int EnvironmentNAVXYTHETALAT::GetStateFromCoord(int x, int y, int theta)
     EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
     if ((OutHashEntry = (this->*GetHashEntry)(x, y, theta)) == NULL) {
         // have to create a new entry
-                    if (theta < 0) {
-                throw SBPL_Exception("5");
-            }
-
         OutHashEntry = (this->*CreateNewHashEntry)(x, y, theta);
     }
     return OutHashEntry->stateID;
@@ -2622,10 +2604,6 @@ void EnvironmentNAVXYTHETALAT::GetSuccs(
         EnvNAVXYTHETALATHashEntry_t* OutHashEntry;
         if ((OutHashEntry = (this->*GetHashEntry)(newX, newY, newTheta)) == NULL) {
             // have to create a new entry
-                        if (newTheta < 0) {
-                throw SBPL_Exception("8");
-            }
-
             OutHashEntry = (this->*CreateNewHashEntry)(newX, newY, newTheta);
         }
 
@@ -2899,8 +2877,6 @@ void EnvironmentNAVXYTHETALAT::InitializeEnvironment()
                 EnvNAVXYTHETALATCfg.EndX_c,
                 EnvNAVXYTHETALATCfg.EndY_c,
                 EnvNAVXYTHETALATCfg.EndTheta);
-
-
 
     }
 

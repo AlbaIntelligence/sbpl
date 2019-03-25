@@ -93,26 +93,4 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
 
                 self.set_primitive_collision_pixels(p.starttheta_c, p.motprimID, perimeter_kernel)
 
-            # current_kernel = self.get_primitive_collision_pixels(p.starttheta_c, p.motprimID)
-            #
-            # min_x, max_x = np.amin(current_kernel[:, 0]), np.amax(current_kernel[:, 0])
-            # min_y, max_y = np.amin(current_kernel[:, 1]), np.amax(current_kernel[:, 1])
-            #
-            # min_x_cv, max_x_cv = np.amin(full_cv_kernel[:, 0]), np.amax(full_cv_kernel[:, 0])
-            # min_y_cv, max_y_cv = np.amin(full_cv_kernel[:, 1]), np.amax(full_cv_kernel[:, 1])
-            #
-            # min_x, max_x = min(min_x, min_x_cv), max(max_x, max_x_cv)
-            # min_y, max_y = min(min_y, min_y_cv), max(max_y, max_y_cv)
-            #
-            # img = np.zeros((max_y-min_y+10, max_x - min_x+10, 3), dtype=np.uint8)
-            # img[current_kernel[:, 1]-min_y, current_kernel[:, 0]-min_x, 1] = 255
-            # img[full_cv_kernel[:, 1] - min_y, full_cv_kernel[:, 0] - min_x, 2] = 255
-            # print(len(np.where((img[:, :, 1] > 0) & (img[:, :, 1] < 255))[0]))
-            # img = np.flipud(img)
-            # magnify = 8
-            #
-            # cv2.imshow("footpint",
-            #            cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST))
-            # cv2.waitKey(-1)
-
         print('Done.')

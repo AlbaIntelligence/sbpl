@@ -86,24 +86,6 @@ def run_sbpl_diffdrive_motion_primitive_planning(
 
         trajectory_through_primitives = np.vstack((trajectory_through_primitives, primitive_states))
 
-        # img = np.flipud(img)
-        # img[collisions[:, 1], collisions[:, 0], 1] = 70
-        # img[pose_cell[1], pose_cell[0], :] = 255
-        # img = np.flipud(img)
-        #
-        # magnify = 2
-        # cv2.imshow("planning result",
-        #            cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST))
-        # cv2.waitKey(-1)
-        #
-        # for pose in primitive_states:
-        #     draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
-        #                color=70, color_axis=(0, 1))
-        #
-        # cv2.imshow("planning result",
-        #            cv2.resize(img, dsize=(0, 0), fx=magnify, fy=magnify, interpolation=cv2.INTER_NEAREST))
-        # cv2.waitKey(-1)
-
     for pose in trajectory_through_primitives:
         draw_robot(img, footprint, pose, params.cellsize_m, np.zeros((2,)),
                    color=70, color_axis=(1, 2))

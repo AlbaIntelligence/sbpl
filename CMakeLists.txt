@@ -9,8 +9,6 @@ set(SBPL_VERSION ${SBPL_MAJOR_VERSION}.${SBPL_MINOR_VERSION}.${SBPL_PATCH_VERSIO
 
 set(CMAKE_BUILD_TYPE Release)
 
-# set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-# set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_CXX_FLAGS "-std=c++1y ${CMAKE_CXX_FLAGS}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -28,7 +26,6 @@ execute_process(
 )
 
 include_directories(
-        # ${Numpy_INCLUDE_DIRS}  # this should come before PYTHON includes because it also contains system numpy
         ${PYTHON_INCLUDE_DIRS}
         "${PROJECT_SOURCE_DIR}/src/include"
         "${PROJECT_SOURCE_DIR}/dep/pybind11/include"
@@ -96,13 +93,6 @@ install(DIRECTORY src/include/sbpl DESTINATION include
 	FILES_MATCHING PATTERN "*.h")
 install(TARGETS sbpl
 	LIBRARY DESTINATION lib)
-
-#add_executable(test_sbpl src/test/main.cpp)
-#target_link_libraries(test_sbpl sbpl)
-
-#add_executable(test_adjacency_list src/test/test_adjacency_list.cpp)
-#target_link_libraries(test_adjacency_list sbpl)
-
 
 if(APPLE)
     set(PYTHON_LIBRARIES "${PYTHON_PREFIX}/lib/libpython2.7.dylib")

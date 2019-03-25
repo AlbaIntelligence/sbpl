@@ -90,43 +90,6 @@ def perform_single_planning(
         print("done with the solution of size=%d and sol. eps=%f in %ss" % (len(plan_xytheta_cell), solution_eps, plan_time))
         print("actual path (with intermediate poses) size=%d" % len(plan_xytheta))
 
-        # angle_to_primitive = {}
-        # for p in motion_primitives.get_primitives():
-        #     try:
-        #         angle_primitives = angle_to_primitive[p.starttheta_c]
-        #     except KeyError:
-        #         angle_primitives = {}
-        #         angle_to_primitive[p.starttheta_c] = angle_primitives
-        #
-        #     angle_primitives[p.motprimID] = p
-        #
-        #
-        # trajectory_through_primitives = np.array([start_pose])
-        # for angle_id, motor_prim_id in actions:
-        #     primitive = angle_to_primitive[angle_id][motor_prim_id]
-        #
-        #     # angle = primitive.get_intermediate_states()[0, 2]
-        #     angle = trajectory_through_primitives[-1, 2]
-        #
-        #     print(np.degrees(trajectory_through_primitives[-1, 2]),
-        #           np.degrees(primitive.get_intermediate_states()[0, 2]))
-        #     pose = np.array([trajectory_through_primitives[-1, 0],
-        #                      trajectory_through_primitives[-1, 1],
-        #                      angle])
-        #     dt = 0.1
-        #     states_through_control = np.array([pose])
-        #     for c in primitive.get_control_signals():
-        #         pose = kinematic_body_pose_motion_step(
-        #             pose=pose,
-        #             linear_velocity=c[0],
-        #             angular_velocity=c[1],
-        #             dt=dt)
-        #         states_through_control = np.vstack((states_through_control, [pose]))
-        #
-        #     trajectory_through_primitives = np.vstack((trajectory_through_primitives, states_through_control))
-        #
-        # plan_xytheta = trajectory_through_primitives
-
         params = environment.get_params()
         costmap = environment.get_costmap()
 

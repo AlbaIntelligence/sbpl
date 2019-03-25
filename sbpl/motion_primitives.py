@@ -403,9 +403,6 @@ def forward_model_diffdrive_motion_primitives(
             )
             primitives.append(primitive)
 
-        # print('There are %d unique primitives from %d' % (len(set(current_primitive_cells)),
-        #                                                   len(current_primitive_cells)))
-
     return MotionPrimitives(
         resolution=resolution,
         number_of_angles=number_of_angles,
@@ -479,12 +476,6 @@ def forward_model_tricycle_motion_primitives(
             perfect_last_pose[:2] = pixel_to_world(end_cell[:2], np.zeros((2,)), resolution)
             perfect_last_pose[2] = angle_discrete_to_cont(end_cell[2], number_of_angles)
 
-            # # penalize slow movement forward and sudden jerns
-            # if controls[0, 0] < target_v*0.5 or abs(controls[0, 1]) > 0.5*target_w:
-            #     action_cost_multiplier = 100
-            # else:
-            #     action_cost_multiplier = 1
-
             action_cost_multiplier = 1
 
             primitive = MotionPrimitive(
@@ -497,9 +488,6 @@ def forward_model_tricycle_motion_primitives(
             )
             primitives.append(primitive)
 
-        # print('There are %d unique primitives from %d' % (len(set(current_primitive_cells)),
-        #                                                   len(current_primitive_cells)))
-
     return MotionPrimitives(
         resolution=resolution,
         number_of_angles=number_of_angles,
@@ -508,7 +496,6 @@ def forward_model_tricycle_motion_primitives(
 
 
 if __name__ == '__main__':
-    # mprimtives = load_motion_pritimives(os.path.join(mprim_folder(), 'custom/gtx_32_10.mprim'))
 
     start_theta_discrete = 0
     number_of_intermediate_states = 3
