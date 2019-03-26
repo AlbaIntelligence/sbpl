@@ -9,7 +9,27 @@ set(SBPL_VERSION ${SBPL_MAJOR_VERSION}.${SBPL_MINOR_VERSION}.${SBPL_PATCH_VERSIO
 
 set(CMAKE_BUILD_TYPE Release)
 
-include_directories(src/include)
+set(CMAKE_CXX_FLAGS "-std=c++1y ${CMAKE_CXX_FLAGS}")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+add_definitions(-O3 )
+
+IF(APPLE)
+   set(CMAKE_MACOSX_RPATH 1)
+ENDIF(APPLE)
+
+
+execute_process(
+    COMMAND "python2.7" -c "from distutils import sysconfig; print(sysconfig.get_python_inc())"
+    OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+include_directories(
+        ${PYTHON_INCLUDE_DIRS}
+        "${PROJECT_SOURCE_DIR}/src/include"
+        "${PROJECT_SOURCE_DIR}/dep/pybind11/include"
+        )
 
 add_library(sbpl SHARED
   src/discrete_space_information/environment_nav2D.cpp
@@ -32,6 +52,7 @@ add_library(sbpl SHARED
   src/utils/utils.cpp
   src/utils/2Dgridsearch.cpp
   src/utils/config.cpp
+  src/runners/runners.cpp
   )
 
 set(SBPL_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/include")
@@ -73,8 +94,20 @@ install(DIRECTORY src/include/sbpl DESTINATION include
 install(TARGETS sbpl
 	LIBRARY DESTINATION lib)
 
-add_executable(test_sbpl src/test/main.cpp)
-target_link_libraries(test_sbpl sbpl)
+if(APPLE)
+    set(PYTHON_LIBRARIES "${PYTHON_PREFIX}/lib/libpython2.7.dylib")
+else(APPLE)
+    # it seems like libpython2.7.so is not necessary on ubuntu
+    # set(PYTHON_LIBRARIES "${PYTHON_PREFIX}/lib/libpython2.7.so")
+endif(APPLE)
 
-add_executable(test_adjacency_list src/test/test_adjacency_list.cpp)
-target_link_libraries(test_adjacency_list sbpl)
+add_library(sbpl_module SHARED
+    ${PROJECT_SOURCE_DIR}/src/python_wrapper.cpp)
+target_link_libraries(sbpl_module ${PYTHON_LIBRARIES} ${PROJECT_NAME})
+
+# Don't prepend wrapper library name with lib and add to Python libs.
+set_target_properties(sbpl_module PROPERTIES
+        PREFIX "_"
+        SUFFIX ".so"
+        LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/sbpl
+        )

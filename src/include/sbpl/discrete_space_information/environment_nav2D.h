@@ -117,7 +117,7 @@ public:
     /**
      *\brief see comments on the same function in the parent class
      */
-    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg);
+    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg) const;
 
     /**
      * \brief see comments on the same function in the parent class
@@ -335,7 +335,7 @@ public:
      *        planning problem)
      */
     virtual void GetEnvParms(int *size_x, int *size_y, int* startx, int* starty, int* goalx, int* goaly,
-                             unsigned char* obsthresh);
+                             unsigned char* obsthresh) const;
 
     /**
      * \brief way to set up various parameters. For a list of parameters, see
@@ -346,7 +346,7 @@ public:
     /**
      * \brief access to internal configuration data structure
      */
-    virtual const EnvNAV2DConfig_t* GetEnvNavConfig();
+    virtual const EnvNAV2DConfig_t* GetEnvNavConfig() const;
 
     EnvironmentNAV2D();
     ~EnvironmentNAV2D();
@@ -354,7 +354,7 @@ public:
     /**
      * \brief print some time statistics
      */
-    virtual void PrintTimeStat(FILE* fOut);
+    virtual void PrintTimeStat(FILE* fOut) const;
 
     /**
      * \brief checks X,Y against map boundaries

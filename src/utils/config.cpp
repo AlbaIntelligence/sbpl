@@ -42,8 +42,8 @@ static int SBPL_DEFAULT_DEBUG_OUTPUT_FLUSH(FILE*);
 static SBPL_PRINT_TEXT_FP sbpl_print_fp = SBPL_DEFAULT_DEBUG_OUTPUT_LOGGER;
 static SBPL_FFLUSH_TEXT_FP sbpl_fflush_fp = SBPL_DEFAULT_DEBUG_OUTPUT_FLUSH;
 #else
-static SBPL_PRINT_TEXT_FP sbpl_print_fp = NULL;
-static SBPL_FFLUSH_TEXT_FP sbpl_fflush_fp = NULL;
+static SBPL_PRINT_TEXT_FP sbpl_print_fp = SBPL_DEFAULT_DEBUG_OUTPUT_LOGGER;
+static SBPL_FFLUSH_TEXT_FP sbpl_fflush_fp = SBPL_DEFAULT_DEBUG_OUTPUT_FLUSH;
 #endif
 
 void SET_SBPL_PRINT_TEXT_FP(SBPL_PRINT_TEXT_FP fptr) { sbpl_print_fp = fptr; }

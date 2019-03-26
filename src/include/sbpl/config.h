@@ -100,8 +100,8 @@ int SBPL_FFLUSHALL(FILE* file);
 #define SBPL_DEBUG_NAMED(file, ...)
 #define SBPL_INFO(...)
 #define SBPL_WARN(...)
-#define SBPL_ERROR(...)
-#define SBPL_FATAL(...)
+#define SBPL_ERROR(...)             SBPL_PRINTALL(SBPL_LEVEL_ERROR, __VA_ARGS__)
+#define SBPL_FATAL(...)             SBPL_PRINTALL(SBPL_LEVEL_FATAL, __VA_ARGS__)
   #endif
 #endif
 

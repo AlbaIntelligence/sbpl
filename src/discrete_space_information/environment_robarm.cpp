@@ -1036,7 +1036,7 @@ bool EnvironmentROBARM::InitializeEnv(const char* sEnvFile)
     return true;
 }
 
-bool EnvironmentROBARM::InitializeMDPCfg(MDPConfig *MDPCfg)
+bool EnvironmentROBARM::InitializeMDPCfg(MDPConfig *MDPCfg) const
 {
     //initialize MDPCfg with the start and goal ids
     MDPCfg->goalstateid = EnvROBARM.goalHashEntry->stateID;

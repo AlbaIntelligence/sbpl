@@ -104,7 +104,7 @@ public:
 
     // Inherited DiscreteSpaceInformation ops
     bool InitializeEnv(const char* sEnvFile);
-    bool InitializeMDPCfg(MDPConfig *MDPCfg);
+    bool InitializeMDPCfg(MDPConfig *MDPCfg) const;
     int GetFromToHeuristic(int FromStateID, int ToStateID);
     int GetGoalHeuristic(int stateID);
     int GetStartHeuristic(int stateID);
@@ -267,7 +267,7 @@ void AdjacencyListSBPLEnv<Coords>::setGoalState(const Coords& c)
 }
 
 template<class Coords>
-bool AdjacencyListSBPLEnv<Coords>::InitializeMDPCfg(MDPConfig *MDPCfg)
+bool AdjacencyListSBPLEnv<Coords>::InitializeMDPCfg(MDPConfig *MDPCfg) const
 {
     MDPCfg->goalstateid = goalStateId_;
     MDPCfg->startstateid = startStateId_;

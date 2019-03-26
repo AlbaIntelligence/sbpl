@@ -122,7 +122,7 @@ public:
     /**
      * \brief initialize MDP config with IDs of start/goal
      */
-    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg);
+    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg) const;
 
     /**
      * \brief see comments on the same function in the parent class

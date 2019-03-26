@@ -340,6 +340,8 @@ public:
      *        In ARA* / AD*: (cost(initialsolution) <= eps*cost(optimalsolution))
      */
     virtual void set_initialsolution_eps(double initialsolution_eps) { }
+    virtual void set_finalsolution_eps(double eps) { }
+    virtual void set_eps_step(double eps) { }
 
     virtual ~SBPLPlanner() { }
 

@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <vector>
 #include <sstream>
+#include <limits>
 
 #include <sbpl/discrete_space_information/environment.h>
 #include <sbpl/utils/utils.h>
@@ -62,20 +63,26 @@ class SBPL2DGridSearch;
 
 struct EnvNAVXYTHETALATAction_t
 {
-    unsigned char aind; //index of the action (unique for given starttheta)
-    char starttheta;
-    char dX;
-    char dY;
-    char endtheta;
+    unsigned int aind; //index of the action (unique for given starttheta)
+    int starttheta;
+    int dX;
+    int dY;
+    int endtheta;
     unsigned int cost;
+
+    // These are cells of a motion primitive, including footprint.
     std::vector<sbpl_2Dcell_t> intersectingcellsV;
-    //start at 0,0,starttheta and end at endcell in continuous domain with half-bin less to account for 0,0 start
+
+    // Raw interposes from motion primitive
     std::vector<sbpl_xy_theta_pt_t> intermptV;
-    //start at 0,0,starttheta and end at endcell in discrete domain
+
+    // Discretized ((res/2,res/2,starttheta) + inter_pose). This effectively is round(inter_pose).
+    // This does not use footpint and therefore used for inscribed_radius fast collision checking.
     std::vector<sbpl_xy_theta_cell_t> interm3DcellsV;
 
- int motprimID;
- double turning_radius;
+    int motprimID;
+
+    double turning_radius;
 
 };
 
@@ -84,14 +91,15 @@ struct EnvNAVXYTHETALATHashEntry_t
     int stateID;
     int X;
     int Y;
-    char Theta;
+    int Theta;
     int iteration;
+
 };
 
 struct SBPL_xytheta_mprimitive
 {
     int motprimID;
-    unsigned char starttheta_c;
+    int starttheta_c;
     int additionalactioncostmult;
     sbpl_xy_theta_cell_t endcell;
     double turning_radius;
@@ -172,22 +180,31 @@ struct EnvNAVXYTHETALATConfig_t
     std::vector<SBPL_xytheta_mprimitive> mprimV;
 
     std::vector<sbpl_2Dpt_t> FootprintPolygon;
+
+    double expansion_angle_lower_limit;  // If graph node angle is below this, do not expand it (limit possible orientations)
+    double expansion_angle_upper_limit; // If graph node angle is above this, do not expand it (limit possible orientations)
 };
 
 class EnvNAVXYTHETALAT_InitParms
 {
 public:
-    unsigned int numThetas;
-    const unsigned char* mapdata;
-    double startx;
-    double starty;
-    double starttheta;
-    double goalx;
-    double goaly;
-    double goaltheta;
-    double goaltol_x;
-    double goaltol_y;
-    double goaltol_theta;
+    int size_x = -1;
+    int size_y = -1;
+    unsigned int numThetas = 0;
+    double startx = -1;
+    double starty = -1;
+    double starttheta = -1;
+    double goalx = -1;
+    double goaly = -1;
+    double goaltheta = -1;
+    double cellsize_m = -1;
+    double nominalvel_mpersecs = -1;
+    double timetoturn45degsinplace_secs = -1;
+    unsigned char obsthresh = 0;
+    unsigned char costinscribed_thresh = 0;
+    unsigned char costcircum_thresh = 0;
+    double expansion_angle_lower_limit = std::numeric_limits<double>::min();
+    double expansion_angle_upper_limit = std::numeric_limits<double>::max();
 };
 
 /** \brief 3D (x,y,theta) planning using lattice-based graph problem. For
@@ -230,12 +247,12 @@ public:
     /**
      * \brief returns the value of specific parameter - see function body for the list of parameters
      */
-    virtual int GetEnvParameter(const char* parameter);
+    virtual int GetEnvParameter(const char* parameter) const;
 
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg);
+    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg) const;
 
     /**
      * \brief see comments on the same function in the parent class
@@ -334,10 +351,12 @@ public:
                                const unsigned char* mapdata,
                                double startx, double starty, double starttheta,
                                double goalx, double goaly, double goaltheta,
-                               double goaltol_x, double goaltol_y, double goaltol_theta,
                                const std::vector<sbpl_2Dpt_t>& perimeterptsV, double cellsize_m,
                                double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
-                               unsigned char obsthresh, const char* sMotPrimFile);
+                               unsigned char obsthresh, const char* sMotPrimFile,
+                               bool computeKernels,
+                               double expansion_angle_lower_limit,
+                               double expansion_angle_higher_limit);
 
     /**
      * \brief Same as the above InitializeEnv except that only the parameters
@@ -345,9 +364,11 @@ public:
      *        parameters may be given in the params object (including the ability to
      *        specify the number of thetas)
      */
-    virtual bool InitializeEnv(int width, int height, const std::vector<sbpl_2Dpt_t> & perimeterptsV, double cellsize_m,
-                               double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
-                               unsigned char obsthresh, const char* sMotPrimFile, EnvNAVXYTHETALAT_InitParms params);
+    virtual bool InitializeEnv(const std::vector<sbpl_2Dpt_t> & perimeterptsV,
+                               const char* sMotPrimFile,
+                               const unsigned char* mapdata,
+                               EnvNAVXYTHETALAT_InitParms params,
+                               bool computeKernels);
 
     /**
      * \brief update the traversability of a cell<x,y>
@@ -386,7 +407,7 @@ public:
      *        the map. Note this is pretty expensive operation since it computes the
      *        footprint of the robot based on its x,y,theta
      */
-    virtual bool IsValidConfiguration(int X, int Y, int Theta);
+    virtual bool IsValidConfiguration(int X, int Y, int Theta) const;
 
     /**
      * \brief returns environment parameters. Useful for creating a copy environment
@@ -394,32 +415,34 @@ public:
     virtual void GetEnvParms(int *size_x, int *size_y, double* startx, double* starty, double* starttheta,
                              double* goalx, double* goaly, double* goaltheta, double* cellsize_m,
                              double* nominalvel_mpersecs, double* timetoturn45degsinplace_secs,
-                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
+                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV) const;
 
     /**
      * \brief returns environment parameters. Useful for creating a copy environment
      */
-    virtual void GetEnvParms(int *size_x, int *size_y, int* num_thetas, double* startx, double* starty,
+    virtual void GetEnvParms(int *size_x, int *size_y, unsigned int* num_thetas, double* startx, double* starty,
                              double* starttheta, double* goalx, double* goaly, double* goaltheta, double* cellsize_m,
                              double* nominalvel_mpersecs, double* timetoturn45degsinplace_secs,
-                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
+                             unsigned char* obsthresh, std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV,
+                             unsigned char* costinscribed_thresh,
+                             unsigned char* costcircum_thresh) const;
 
     /**
      * \brief get internal configuration data structure
      */
-    virtual const EnvNAVXYTHETALATConfig_t* GetEnvNavConfig();
+    virtual const EnvNAVXYTHETALATConfig_t* GetEnvNavConfig() const;
 
     virtual ~EnvironmentNAVXYTHETALATTICE();
 
     /**
      * \brief prints time statistics
      */
-    virtual void PrintTimeStat(FILE* fOut);
+    virtual void PrintTimeStat(FILE* fOut) const;
 
     /**
      * \brief returns the cost corresponding to the cell <x,y>
      */
-    virtual unsigned char GetMapCost(int x, int y);
+    virtual unsigned char GetMapCost(int x, int y) const;
 
     /**
      * \brief returns true if cell is within map
@@ -479,7 +502,7 @@ protected:
 
     virtual void ReadConfiguration(FILE* fCfg);
 
-    virtual void InitializeEnvConfig(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
+    virtual void InitializeEnvConfig(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV, bool computeKernels);
 
     virtual bool CheckQuant(FILE* fOut);
 
@@ -491,10 +514,8 @@ protected:
                                   double cellsize_m, double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
                                   const std::vector<sbpl_2Dpt_t> & robot_perimeterV);
 
-    virtual bool InitGeneral(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
-    virtual void PrecomputeActionswithBaseMotionPrimitive(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
-    virtual void PrecomputeActionswithCompleteMotionPrimitive(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV);
-    virtual void DeprecatedPrecomputeActions();
+    virtual bool InitGeneral(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV, bool computeKernels);
+    virtual void PrecomputeActionswithCompleteMotionPrimitive(std::vector<SBPL_xytheta_mprimitive>* motionprimitiveV, bool computeKernels);
 
     virtual void InitializeEnvironment() = 0;
 
@@ -545,12 +566,12 @@ public:
     /**
      * \brief sets start in meters/radians
      */
-    virtual int SetStart(double x, double y, double theta);
+    virtual int SetStart(double x, double y, double theta, bool check_collisions);
 
     /**
      * \brief sets goal in meters/radians
      */
-    virtual int SetGoal(double x, double y, double theta);
+    virtual int SetGoal(double x, double y, double theta, bool check_collisions);
 
     /**
      * \brief sets goal tolerance. (Note goal tolerance is ignored currently)
@@ -659,6 +680,16 @@ public:
     virtual void PrintVars() { }
 
     const EnvNAVXYTHETALATHashEntry_t* GetStateEntry(int state_id) const;
+
+    /*
+     * Return collision pixels for an action
+     */
+    virtual void GetCollisionCellsForPrimitive(int SourceTheta, int motprimID, std::vector<sbpl_2Dcell_t>* collisionCells) const;
+    /*
+     * Set collision pixels for an action
+     */
+    virtual void SetCollisionCellsForPrimitive(int SourceTheta, int motprimID, const std::vector<sbpl_2Dcell_t>& collisionCells);
+
 
 protected:
     //hash table of size x_size*y_size. Maps from coords to stateId

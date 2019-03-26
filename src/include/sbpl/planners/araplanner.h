@@ -213,6 +213,11 @@ public:
     virtual void set_eps_step(double eps) { dec_eps = eps; }
 
     /**
+     * \brief sets the value to decrease from eps at each iteration
+     */
+    virtual void set_finalsolution_eps(double eps) { final_epsilon = eps; }
+
+    /**
      * \brief prints out the search path into a file
      */
     virtual void print_searchpath(FILE* fOut);

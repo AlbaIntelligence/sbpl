@@ -93,7 +93,7 @@ public:
     /**
      * \brief see comments on the same function in the parent class
      */
-    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg);
+    virtual bool InitializeMDPCfg(MDPConfig *MDPCfg) const;
 
     /**
      * \brief see comments on the same function in the parent class

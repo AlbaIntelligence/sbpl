@@ -12,3 +12,5 @@ build/*
 
 .project
 .cproject
+.DS_Store
+willow-25mm-inflated-env.cfg

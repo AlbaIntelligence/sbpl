@@ -704,7 +704,7 @@ bool EnvironmentNAV2D::InitGeneral()
     return true;
 }
 
-bool EnvironmentNAV2D::InitializeMDPCfg(MDPConfig *MDPCfg)
+bool EnvironmentNAV2D::InitializeMDPCfg(MDPConfig *MDPCfg) const
 {
     //initialize MDPCfg with the start and goal ids
     MDPCfg->goalstateid = EnvNAV2D.goalstateid;
@@ -1053,7 +1053,7 @@ int EnvironmentNAV2D::GetStateFromCoord(int x, int y)
     return OutHashEntry->stateID;
 }
 
-const EnvNAV2DConfig_t* EnvironmentNAV2D::GetEnvNavConfig()
+const EnvNAV2DConfig_t* EnvironmentNAV2D::GetEnvNavConfig() const
 {
     return &EnvNAV2DCfg;
 }
@@ -1125,7 +1125,7 @@ void EnvironmentNAV2D::PrintEnv_Config(FILE* fOut)
     throw SBPL_Exception("ERROR in EnvNAV2D... function: PrintEnv_Config is undefined");
 }
 
-void EnvironmentNAV2D::PrintTimeStat(FILE* fOut)
+void EnvironmentNAV2D::PrintTimeStat(FILE* fOut) const
 {
 #if TIME_DEBUG
     SBPL_FPRINTF(fOut,
@@ -1186,7 +1186,7 @@ unsigned char EnvironmentNAV2D::GetMapCost(int x, int y)
 }
 
 void EnvironmentNAV2D::GetEnvParms(int *size_x, int *size_y, int* startx, int* starty, int* goalx, int* goaly,
-                                   unsigned char* obsthresh)
+                                   unsigned char* obsthresh) const
 {
     *size_x = EnvNAV2DCfg.EnvWidth_c;
     *size_y = EnvNAV2DCfg.EnvHeight_c;

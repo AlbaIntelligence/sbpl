@@ -437,6 +437,10 @@ int ARAPlanner::ImprovePath(ARASearchStateSpace_t* pSearchStateSpace, double Max
         }
     }
 
+    if (minkey.key[0] > INFINITECOST) {
+        SBPL_ERROR("ERROR in ImprovePath: cost overflow\n");
+    }
+
     int retv = 1;
     if (searchgoalstate->g == INFINITECOST && pSearchStateSpace->heap->emptyheap()) {
         SBPL_PRINTF("solution does not exist: search exited because heap is empty\n");
