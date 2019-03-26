@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <vector>
 #include <sstream>
+#include <limits>
 
 #include <sbpl/discrete_space_information/environment.h>
 #include <sbpl/utils/utils.h>
@@ -179,6 +180,9 @@ struct EnvNAVXYTHETALATConfig_t
     std::vector<SBPL_xytheta_mprimitive> mprimV;
 
     std::vector<sbpl_2Dpt_t> FootprintPolygon;
+
+    double expansion_angle_lower_limit;  // If graph node angle is below this, do not expand it (limit possible orientations)
+    double expansion_angle_upper_limit; // If graph node angle is above this, do not expand it (limit possible orientations)
 };
 
 class EnvNAVXYTHETALAT_InitParms
@@ -199,6 +203,8 @@ public:
     unsigned char obsthresh = 0;
     unsigned char costinscribed_thresh = 0;
     unsigned char costcircum_thresh = 0;
+    double expansion_angle_lower_limit = std::numeric_limits<double>::min();
+    double expansion_angle_upper_limit = std::numeric_limits<double>::max();
 };
 
 /** \brief 3D (x,y,theta) planning using lattice-based graph problem. For
@@ -348,7 +354,9 @@ public:
                                const std::vector<sbpl_2Dpt_t>& perimeterptsV, double cellsize_m,
                                double nominalvel_mpersecs, double timetoturn45degsinplace_secs,
                                unsigned char obsthresh, const char* sMotPrimFile,
-                               bool computeKernels);
+                               bool computeKernels,
+                               double expansion_angle_lower_limit,
+                               double expansion_angle_higher_limit);
 
     /**
      * \brief Same as the above InitializeEnv except that only the parameters

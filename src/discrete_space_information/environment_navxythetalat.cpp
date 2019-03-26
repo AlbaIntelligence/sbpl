@@ -55,6 +55,8 @@ EnvironmentNAVXYTHETALATTICE::EnvironmentNAVXYTHETALATTICE()
     EnvNAVXYTHETALATCfg.cost_inscribed_thresh = EnvNAVXYTHETALATCfg.obsthresh;
     // the value that pretty much makes it disabled
     EnvNAVXYTHETALATCfg.cost_possibly_circumscribed_thresh = -1;
+    EnvNAVXYTHETALATCfg.expansion_angle_lower_limit = std::numeric_limits<double>::min();
+    EnvNAVXYTHETALATCfg.expansion_angle_upper_limit = std::numeric_limits<double>::max();
 
     grid2Dsearchfromstart = NULL;
     grid2Dsearchfromgoal = NULL;
@@ -1712,7 +1714,10 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
             params.timetoturn45degsinplace_secs,
             params.obsthresh,
             sMotPrimFile,
-            computeKernels);
+            computeKernels,
+            params.expansion_angle_lower_limit,
+            params.expansion_angle_upper_limit
+    );
 }
 
 bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
@@ -1727,7 +1732,10 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
     double timetoturn45degsinplace_secs,
     unsigned char obsthresh,
     const char* sMotPrimFile,
-    bool computeKernels)
+    bool computeKernels,
+    double expansion_angle_lower_limit,
+    double expansion_angle_upper_limit
+    )
 {
     SBPL_PRINTF("env: initialize with width=%d height=%d start=%.3f %.3f %.3f "
                 "goalx=%.3f %.3f %.3f cellsize=%.3f nomvel=%.3f timetoturn=%.3f, obsthresh=%d\n",
@@ -1746,6 +1754,8 @@ bool EnvironmentNAVXYTHETALATTICE::InitializeEnv(
     EnvNAVXYTHETALATCfg.cellsize_m = cellsize_m;
     EnvNAVXYTHETALATCfg.StartTheta_rad = starttheta;
     EnvNAVXYTHETALATCfg.EndTheta_rad = goaltheta;
+    EnvNAVXYTHETALATCfg.expansion_angle_lower_limit = expansion_angle_lower_limit;
+    EnvNAVXYTHETALATCfg.expansion_angle_upper_limit = expansion_angle_upper_limit;
 
     // TODO - need to set the tolerance as well
 
@@ -2655,10 +2665,9 @@ void EnvironmentNAVXYTHETALAT::GetPreds(
         int predTheta = nav3daction->starttheta;
 
         double actionThetaRad = DiscTheta2ContNew(predTheta);
-        double lowerLimit = 3.490658503988659;
-        double higherLimit = 5.934119456780721;
-        if (actionThetaRad < lowerLimit || actionThetaRad>higherLimit) {
-            //SBPL_ERROR("SKIPPING PRED ANGLE %f", DiscTheta2ContNew(predTheta));
+        if (actionThetaRad < EnvNAVXYTHETALATCfg.expansion_angle_lower_limit ||
+            actionThetaRad > EnvNAVXYTHETALATCfg.expansion_angle_upper_limit)  {
+            // skipping angle because of the limits
             continue;
         }
 

@@ -63,6 +63,8 @@ def perform_single_planning(
     params.goalx = 0
     params.goaly = 0
     params.goaltheta = 0
+    params.expansion_angle_lower_limit = -np.inf
+    params.expansion_angle_upper_limit = np.inf
 
     environment = EnvironmentNAVXYTHETALAT(
         footprint,
