@@ -86,7 +86,7 @@ class EnvironmentNAVXYTHETALAT(sbpl._sbpl_module.EnvironmentNAVXYTHETALAT):
 
                 temp_img = np.zeros((max_y - min_y+1, max_x - min_x+1), dtype=np.uint8)
                 temp_img[full_cv_kernel[:, 1] - min_y, full_cv_kernel[:, 0] - min_x] = 255
-                contours, _ = cv2.findContours(temp_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+                _, contours, _ = cv2.findContours(temp_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
                 contour = contours[0].reshape(-1, 2)
 
                 perimeter_kernel = np.column_stack((contour[:, 0] + min_x, contour[:, 1] + min_y)).astype(np.int32)
